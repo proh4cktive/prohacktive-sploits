@@ -1,6 +1,6 @@
 # ProHacktive-SPloits
 
-ProHacktive-SPloits is a Python exploit database fetcher and searcher powered with MongoDB and inspired by cve-search and VIA4CVE
+ProHacktive-SPloits is a Python exploit database fetcher and searcher powered with MongoDB and inspired by cve-search and VIA4CVE (Currently in development)
 
 ## Installation
 
