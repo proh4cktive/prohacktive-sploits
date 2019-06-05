@@ -162,7 +162,7 @@ class ProHacktiveDB():
         self.collections = self.db[self.db_name]
         for collection_name in self.collections.list_collection_names():
             # Ignore srcs signature
-            if collection_name not in self.collectionsBlacklist():
+            if collection_name in self.collectionsBlacklist():
                 continue
             self.stats.append(Statistics(collection_name))
 
@@ -206,7 +206,7 @@ class ProHacktiveDB():
         result = dict()
         for collection_name in self.collections.list_collection_names():
             # Ignore getSrcSigsCollectionName()
-            if collection_name not in self.collectionsBlacklist():
+            if collection_name in self.collectionsBlacklist():
                 continue
             collection = self.getCollection(collection_name)
             result[collection.name()] = collection.find({"_id": unique_id})
@@ -217,7 +217,7 @@ class ProHacktiveDB():
         exploits_id = list()
         for collection_name in self.collections.list_collection_names():
             # Ignore getSrcSigsCollectionName()
-            if not collection_name not in self.collectionsBlacklist():
+            if collection_name in self.collectionsBlacklist():
                 continue
             collection = self.getCollection(collection_name)
             # Get all data to find
