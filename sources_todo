@@ -1,0 +1,33 @@
+
+May not included in Vulners Source:
+https://oval.cisecurity.org/repository/download/5.11.1/all/oval.xml.zip 
+https://cve.mitre.org ?
+https://www.itsecdb.com/oval/ ?
+
+We can try to get more database here, but I don't know any of the price
+as we can only ask for a demo at first
+https://www.riskbasedsecurity.com/contactus/
+
+Also there, we can register to get an API key but limited by the amount of 50 connections per day,
+https://vuldb.com
+we can also pay for more data here : https://vuldb.com/fr/?pay 
+but it is really expensive. Vulners is just fine I think
+
+Vulners includes:
+['openbugbounty', 'cve', 'nessus', 'openvas', 'seebug', 'securityvulns', 
+'exploitdb', 'osvdb', 'packetstorm', 'zdt', 'xssed', 'hackapp', 
+'ciscothreats', 'threatpost', 'myhack58', 'debian', 'redhat', 
+'hackerone', 'symantec', 'suse', 'ubuntu', 'thn', 'zdi', 'freebsd', 
+'metasploit', 'cert', 'oraclelinux', 'f5', 'cisco', 'wpvulndb', 
+'centos', 'kitploit', 'saint', 'gentoo', 'atlassian', 'jvn', 
+'vulnerlab', 'kaspersky', 'hackread', 'slackware', 'ics', 
+'amazon', 'mozilla', 'n0where', 'schneier', 'talos', 'dsquare', 
+'malwarebytes', 'zeroscience', 'nodejs', 'nmap', 'canvas', 
+'archlinux', 'carbonblack', 'huawei', 'htbridge', 'joomla', 'trendmicroblog',
+'cloudfoundry', 'ptsecurity', 'talosblog', 'wired', 'httpd', 'coalfire', 
+'fireeye', 'krebs', 'typo3', 'akamaiblog', 'erpscan', 'xen', 'qualysblog', 'owncloud', 'impervablog', 
+'securelist', 'rdot', 'lenovo', 'phpmyadmin', 'vmware', 'mssecure', 'coresecurity', 'd2', 'openssl', 'w3af', 'opera', 'aix', 
+'rapid7community', 'paloalto', 'avleonov', 'samba', 'wallarmlab', 'mmpc', 'pentestpartners', 'pentestit', 'postgresql', 
+'drupal', 'ripstech', 'sslabuse', 'taosecurity', 'oracle', 'msrc', 'msvr', 'pwnmalw', 'filippoio', 'duo', 'tenable',
+'intothesymmetry', 'korelogic', 'nginx', 'rhino', 'appercut', 'silentrobots', 'd0znpp', 'modx', 'binamuse', 'cve0day',
+'jakearchibald', 'openwrt', 'pentestlab', 'thehackerblog', 'pentestnepal', 'websecuritylog', 'anandpraka', 'yubico', 'zeustracker']

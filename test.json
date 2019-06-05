@@ -1,0 +1,201 @@
+[
+    {
+        "_id": "CVE-2012-6685",
+        "_index": "es6_bulletins_bulletin",
+        "_score": null,
+        "_source": {
+            "bulletinFamily": "NVD",
+            "cvelist": [
+                "CVE-2012-6685"
+            ],
+            "cvss": {
+                "score": [ "hello" ],
+                "vector": "AV:NETWORK/AC:LOW/Au:UNKNOWN/C:PARTIAL/I:NONE/A:NONE/"
+            },
+            "description": "Nokogiri gem for Ruby could allow a remote attacker to obtain sensitive information, caused by an XML External Entity Injection (XXE) error when processing XML data. By sending specially-crafted XML data, an attacker could exploit this vulnerability to obtain sensitive information.",
+            "edition": 1,
+            "enchantments": {
+                "dependencies": {
+                    "modified": "2016-03-20T19:28:44",
+                    "references": [
+                        {
+                            "idList": [
+                                "DEBIAN:DLA-229-1:B4F6F"
+                            ],
+                            "type": "debian"
+                        },
+                        {
+                            "idList": [
+                                "DEBIAN_DLA-229.NASL",
+                                "MACOSX_SECUPD2015-006.NASL",
+                                "APPLETV_7_2_1.NASL",
+                                "MACOSX_10_10_5.NASL"
+                            ],
+                            "type": "nessus"
+                        },
+                        {
+                            "idList": [
+                                "SECURITYVULNS:VULN:14631",
+                                "SECURITYVULNS:DOC:32392",
+                                "SECURITYVULNS:DOC:32390",
+                                "SECURITYVULNS:VULN:14630"
+                            ],
+                            "type": "securityvulns"
+                        }
+                    ]
+                },
+                "score": {
+                    "value": 5.0,
+                    "vector": "NONE"
+                }
+            },
+            "href": "https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2012-6685",
+            "id": "CVE-2012-6685",
+            "lastseen": "2016-03-20T19:28:44",
+            "modified": "2015-01-03T00:00:00",
+            "published": "2015-01-03T00:00:00",
+            "references": [
+                "http://seclists.org/oss-sec/2015/q1/57",
+                "http://rubygems.org/gems/nokogiri",
+                "http://seclists.org/oss-sec/2015/q1/9",
+                "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-6685"
+            ],
+            "reporter": "NVD",
+            "title": "CVE-2012-6685: Nokogiri gem for Ruby XML information disclosure",
+            "type": "cve",
+            "viewCount": 0
+        },
+        "_type": "bulletin",
+        "sort": [
+            48267
+        ]
+    },
+    {
+        "_id": "CVE-2013-0497",
+        "_index": "es6_bulletins_bulletin",
+        "_score": null,
+        "_source": {
+            "bulletinFamily": "NVD",
+            "cvelist": [
+                "CVE-2013-0497"
+            ],
+            "cvss": {
+                "score": 3.8,
+                "vector": "AV:NETWORK/AC:HIGH/Au:UNKNOWN/C:PARTIAL/I:PARTIAL/A:PARTIAL/"
+            },
+            "description": "The IBM SONAS (Scale Out Network Attached Storage) and Storwize V7000 Unified Graphical User Interface generates a session cookie after successful authentication an Administrative User. A flaw in the Graphical User Interface does not invalidate the session cookie after logging off. An attacker who gains access to the session cookie could get access to the Graphical User Interface, even after termination of the respective session.",
+            "edition": 1,
+            "enchantments": {
+                "dependencies": {
+                    "modified": "2016-03-20T20:12:06",
+                    "references": []
+                },
+                "score": {
+                    "value": 7.5,
+                    "vector": "NONE"
+                }
+            },
+            "href": "https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2013-0497",
+            "id": "CVE-2013-0497",
+            "lastseen": "2016-03-20T20:12:06",
+            "modified": "2013-06-27T00:00:00",
+            "published": "2013-06-27T00:00:00",
+            "references": [
+                "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-0497",
+                "http://www-01.ibm.com/support/docview.wss?uid=ssg1S1004349",
+                "http://www-01.ibm.com/support/docview.wss?uid=ssg1S1004389"
+            ],
+            "reporter": "NVD",
+            "title": "CVE-2013-0497: IBM SONAS and Storwize V7000 GUI authentication session hijacking",
+            "type": "cve",
+            "viewCount": 0
+        },
+        "_type": "bulletin",
+        "sort": [
+            48268
+        ]
+    },
+    {
+        "_id": "CVE-2005-0153",
+        "_index": "es6_bulletins_bulletin",
+        "_score": null,
+        "_source": {
+            "bulletinFamily": "NVD",
+            "cvelist": [
+                "CVE-2005-0153"
+            ],
+            "cvss": {
+                "score": 0.0,
+                "vector": "AV:REMOTE/AC:LOW/Au:UNKNOWN/C:PARTIAL/I:NONE/A:NONE/"
+            },
+            "description": "newsgrab is an application running on Unix that is used to download binary encoded messages from USENet. newsgrab versions prior to 0.5.0pre4 could allow a remote attacker to traverse directories on the Web server, caused by improper validation of user-supplied input in the file name. A remote attacker can send a specially-crafted file name containing \"dot dot\" (/../) sequences to traverse directories and overwrite arbitrary files on the system with user privileges.",
+            "edition": 1,
+            "enchantments": {
+                "dependencies": {
+                    "modified": "2016-03-20T14:03:08",
+                    "references": [
+                        {
+                            "idList": [
+                                "OPENVAS:52200"
+                            ],
+                            "type": "openvas"
+                        },
+                        {
+                            "idList": [
+                                "OSVDB:13459"
+                            ],
+                            "type": "osvdb"
+                        },
+                        {
+                            "idList": [
+                                "FREEBSD_PKG_35F6093C73C311D98A9300065BE4B5B6.NASL"
+                            ],
+                            "type": "nessus"
+                        },
+                        {
+                            "idList": [
+                                "35F6093C-73C3-11D9-8A93-00065BE4B5B6"
+                            ],
+                            "type": "freebsd"
+                        },
+                        {
+                            "idList": [
+                                "EDB-ID:25080"
+                            ],
+                            "type": "exploitdb"
+                        },
+                        {
+                            "idList": [
+                                "SSV:78747"
+                            ],
+                            "type": "seebug"
+                        }
+                    ]
+                },
+                "score": {
+                    "value": 7.2,
+                    "vector": "NONE"
+                }
+            },
+            "href": "https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2005-0153",
+            "id": "CVE-2005-0153",
+            "lastseen": "2016-03-20T14:03:08",
+            "modified": "2005-02-02T00:00:00",
+            "published": "2005-02-02T00:00:00",
+            "references": [
+                "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2005-0153",
+                "http://www.osvdb.org/osvdb/13459",
+                "http://sourceforge.net/projects/newsgrab/",
+                "http://www.securityfocus.com/bid/12428"
+            ],
+            "reporter": "NVD",
+            "title": "CVE-2005-0153: newsgrab file names directory traversal",
+            "type": "cve",
+            "viewCount": 2
+        },
+        "_type": "bulletin",
+        "sort": [
+            48278
+        ]
+    }
+]

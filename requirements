@@ -1,0 +1,7 @@
+colorama
+configparser
+progressbar
+pymongo
+pyunpack
+requests
+vulners
