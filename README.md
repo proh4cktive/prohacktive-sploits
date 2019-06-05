@@ -53,11 +53,13 @@ This will download all the database from different +100 sources into a folder ca
 
 It can take up to 30 minutes to fetching us all the sources
 
-- To sync all the sources to the MongoDB database:
+- To full update all the sources to the MongoDB database:
 ```bash
 python3 prohacktive_full_update.py
 ```
-This will read all the sources fetched inside ```tmp/fetched_srcs/``` directory, and update all exploits inside the database, if it doesn't exist, the python script will insert the new exploit.
+This will read all the sources fetched inside ```tmp/fetched_srcs/``` directory, and insert all exploits & erase old exploits inside the database.
+
+- Syncing incoming
 
 It can take up to 15 minutes
 
