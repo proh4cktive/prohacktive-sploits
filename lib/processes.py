@@ -20,9 +20,8 @@ class CProcess(Process):
         return ret
 
 
-def handleProcesses(processes_list, processes_running_limit, sleep_time=None):
+def handle_processes(processes_list, processes_running_limit, sleep_time=None):
     processes_running = list()
-    # Update all sources in multiple processes
     while True:
         processes_len = len(processes_running)
         # Start x processes by x processes by default

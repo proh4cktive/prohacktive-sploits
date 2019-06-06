@@ -21,47 +21,47 @@ magic_dict = {"\x1f\x8b\x08": "gz",
 max_dict_len = max(len(x) for x in magic_dict)
 
 
-def getFetchedSrcsDir():
+def get_fetched_srcs_dir():
     return temp_dir + "fetched_srcs/"
 
 
-if not os.path.exists(getFetchedSrcsDir()):
-    os.mkdir(getFetchedSrcsDir())
+if not os.path.exists(get_fetched_srcs_dir()):
+    os.mkdir(get_fetched_srcs_dir())
 
 
-def isCompressed(data):
+def is_compressed(data):
     for magic, filetype in magic_dict.items():
         if data == magic:
             return filetype
     return None
 
 
-def isFileCompressed(filename):
+def is_file_compressed(filename):
     with open(filename, "rb") as f:
         file_start = f.read(max_dict_len)
         f.close()
-        return isCompressed(file_start.data)
+        return is_compressed(file_start.data)
     return None
 
 
-def makeSig(data):
+def make_sig(data):
     if not isinstance(data, bytearray):
         raise "Expected the data to be a bytearray"
     h = hashlib.sha256(data).hexdigest()
     return bytearray(h.encode("ascii"))
 
 
-def makeSigFromFile(filename):
+def make_sig_from_file(filename):
     if os.path.isfile(filename):
         file = open(filename, "rb")
-        hashed_file = makeSig(file.read())
+        hashed_file = make_sig(file.read())
         file.close()
         return hashed_file
     else:
         return None
 
 
-def readFile(filename):
+def read_file(filename):
     if os.path.isfile(filename):
         file = open(filename, "r")
         data = file.read()
@@ -71,7 +71,7 @@ def readFile(filename):
         return None
 
 
-def readFileBytes(filename):
+def read_file_bytes(filename):
     if os.path.isfile(filename):
         file = open(filename, "rb")
         data = file.read()
@@ -81,7 +81,7 @@ def readFileBytes(filename):
         return None
 
 
-def writeFileBytes(filename, data):
+def write_file_bytes(filename, data):
     if not isinstance(data, bytearray):
         raise "Expected the data to be a bytearray"
     file = open(filename, "wb")
@@ -90,34 +90,34 @@ def writeFileBytes(filename, data):
     return data
 
 
-def writeFile(filename, data):
+def write_file(filename, data):
     file = open(filename, "w")
     file.write(data)
     file.close()
     return data
 
 
-def readSource(sourcename):
-    sourcename = getFetchedSrcsDir() + sourcename
-    return readFileBytes(sourcename)
+def read_source(sourcename):
+    sourcename = get_fetched_srcs_dir() + sourcename
+    return read_file_bytes(sourcename)
 
 
-def writeSource(sourcename, data):
-    sourcename = getFetchedSrcsDir() + sourcename
-    writeFileBytes(sourcename, data)
+def write_source(sourcename, data):
+    sourcename = get_fetched_srcs_dir() + sourcename
+    write_file_bytes(sourcename, data)
 
 
-def readSourceSig(sourcename):
-    sourcename = getFetchedSrcsDir() + sourcename + ".sig"
-    return readFileBytes(sourcename)
+def read_source_sig(sourcename):
+    sourcename = get_fetched_srcs_dir() + sourcename + ".sig"
+    return read_file_bytes(sourcename)
 
 
-def writeSourceSig(sourcename, data):
-    sourcename = getFetchedSrcsDir() + sourcename + ".sig"
-    writeFileBytes(sourcename, data)
+def write_source_sig(sourcename, data):
+    sourcename = get_fetched_srcs_dir() + sourcename + ".sig"
+    write_file_bytes(sourcename, data)
 
 
-class SrcHelper():
+class SourceHelper():
     def __init__(self, url):
         self.url = url
 
@@ -133,7 +133,7 @@ class SrcHelper():
         data = response.content
 
         # Check if data is compressed
-        if isCompressed(data):
+        if is_compressed(data):
             temp_filename = "tempfile"
             # Write to temporary file the response
             if not os.path.exists(temp_dir):

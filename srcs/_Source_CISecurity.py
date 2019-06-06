@@ -6,8 +6,8 @@ runPath = os.path.dirname(os.path.realpath(__file__+"../../"))
 sys.path.append(runPath + "/lib/")
 
 import colors
-import ph_db
-from src_helper import SrcHelper
+import phdb
+from sourcehelper import SrcHelper
 
 class CISecurityDB():
     def __init__(self):

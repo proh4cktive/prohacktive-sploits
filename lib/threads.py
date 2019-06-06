@@ -21,7 +21,7 @@ class CThread(Thread):
         return ret
 
 
-def handleThreads(threads_list, threads_running_limit, sleep_time=None):
+def handle_threads(threads_list, threads_running_limit, sleep_time=None):
     threads_running = list()
     while True:
         threads_len = len(threads_running)
