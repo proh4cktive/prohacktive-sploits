@@ -76,6 +76,6 @@ python3 json_analyzer.py tmp/fetched_srcs/Vulners_cve
 
 You can add more sources to the ```srcs/``` folder by writing a python module.
 
-In order to get proper data, you'll need to write the parsed database from the source (can be different format) and convert it into a JSON file so the source manager can insert it into the MongoDB database in a new collections for you.
+In order to get proper data, you'll need to write python module by downloading from the source (can be different format) and convert it into a JSON file / list of dictionaries (you can take the model from Vulners) so the source manager can insert it into the MongoDB database in a new collection for you.
 
 The function that the source manager that will call by importing your python module is called ```fetch_handler()``` and the future sources needs to be written into ```tmp/fetched_src/``` so the source manager can read all the fetched sources without taking too much RAM.
