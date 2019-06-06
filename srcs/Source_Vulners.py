@@ -109,4 +109,4 @@ def fetch_handler():
             collection_name, vulners_source_fetch, vulners_api_key, collection_name))
 
     processes_count_limit = len(processes_list)
-    processes.handleProcesses(processes_list, processes_count_limit, 0.01)
+    processes.handle_processes(processes_list, processes_count_limit, 0.01)

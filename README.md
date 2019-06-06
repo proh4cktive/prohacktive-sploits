@@ -50,7 +50,7 @@ python3 prohacktive_fetch.py
 ```
 This will download all the database from different +100 sources into a folder called ```tmp/fetched_srcs/``` inside the repository that you have cloned.
 
-It can take up to 30 minutes to fetching us all the sources
+It can take up to 15 minutes (depending on your connection) to fetching us all the sources
 
 - To full update all the sources to the MongoDB database:
 ```bash
@@ -60,7 +60,7 @@ This will read all the sources fetched inside ```tmp/fetched_srcs/``` directory,
 
 - Syncing incoming
 
-It can take up to 15 minutes
+It can take up to 2 minutes
 
 This will also for each sources creates a collection inside your database
 

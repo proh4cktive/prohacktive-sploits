@@ -81,7 +81,7 @@ class SourcesManager():
 
         # Handle processes
         processes_running_limit = config.current_config.process_limit_update
-        processes.handleProcesses(processes_list, processes_running_limit, 0.01)
+        processes.handle_processes(processes_list, processes_running_limit, 0.01)
 
         return 1
 
