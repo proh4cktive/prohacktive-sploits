@@ -155,44 +155,11 @@ class ProHacktiveDB():
 
         try:
             self.db = pymongo.MongoClient(
-                host, port, username=user, password=password)
+                host, port, username=user, password=password, maxPoolSize=None)
         except pymongo.errors.PyMongoError as e:
             colors.print_error(e)
 
         self.collections = self.db[self.db_name]
-        for collection_name in self.collections.list_collection_names():
-            # Ignore srcs signature
-            if collection_name in self.collectionsBlacklist():
-                continue
-            self.stats.append(Statistics(collection_name))
-
-    # Stats methods
-    def initLocalStats(self, collections_name):
-        self.stats = list()
-        for collection_name in collections_name:
-            self.stats.append(Statistics(collection_name))
-
-    def eraseRemoteStats(self):
-        self.collections.drop_collection(self.getStatsCollectionName())
-
-    def findLocalStatsIdByName(self, name):
-        for i in range(len(self.stats)):
-            if self.stats[i].collection_name == name:
-                return i
-        raise "Couldn't find stats %s" % name
-
-    def getLocalStats(self, name):
-        return self.stats[self.findLocalStatsIdByName(name)]
-
-    def insertStats(self):
-        for stats in self.stats:
-            dict_stats = {"source": stats.collection_name, "timestamp": stats.timestamp,
-                          "inserted": stats.exploit_inserts, "updated": stats.exploit_updates}
-            collection = self.getCollection(self.getStatsCollectionName())
-            try:
-                collection.insert_one(dict_stats)
-            except pymongo.errors.PyMongoError as e:
-                colors.print_error(e)
 
     def getCollection(self, name):
         collection = self.collections.get_collection(name)
@@ -240,7 +207,6 @@ class ProHacktiveDB():
             collection.insert_one(exploit)
         except pymongo.errors.PyMongoError as e:
             colors.print_error(e)
-        self.getLocalStats(collection_name).exploitInsert(exploit["_id"])
 
     def updateExploit(self, exploit, collection_name):
         collection = self.getCollection(collection_name)
@@ -255,10 +221,6 @@ class ProHacktiveDB():
             # If it doesn't exist, insert it
             if result.matched_count == 0:
                 self.insertExploit(exploit, collection_name)
-            # Else we add it to the counter statistics
-            else:
-                self.getLocalStats(
-                    collection_name).exploitUpdate(exploit["_id"])
 
     # Signatures methods
     def insertSrcSignature(self, src_name, sig):

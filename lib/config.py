@@ -11,15 +11,15 @@ config_filename = "/etc/prohacktive.conf"
 class Config():
     def __init__(self, db_host="localhost", db_port=27017,
                  db_name="prohacktive", db_user="", db_password="",
-                 vulners_api_key="", thread_limit_update=8, thread_limit_fetch=8):
+                 vulners_api_key="", process_limit_update=8, process_limit_fetch=8):
         self.db_host = db_host
         self.db_port = int(db_port)
         self.db_name = db_name
         self.db_user = db_user
         self.db_password = db_password
         self.vulners_api_key = vulners_api_key
-        self.thread_limit_fetch = int(thread_limit_fetch)
-        self.thread_limit_update = int(thread_limit_update)
+        self.process_limit_fetch = int(process_limit_fetch)
+        self.process_limit_update = int(process_limit_update)
 
     def get(self):
         config_gen = configparser.ConfigParser()
@@ -30,8 +30,8 @@ class Config():
             "db_user": self.db_user,
             "db_pass": self.db_password}
         config_gen["VULNERS"] = {"vulners_api_key": self.vulners_api_key}
-        config_gen["THREADS"] = {
-            "thread_limit_update": int(self.thread_limit_update), "thread_limit_fetch": int(self.thread_limit_fetch)}
+        config_gen["processes"] = {
+            "process_limit_update": int(self.process_limit_update), "process_limit_fetch": int(self.process_limit_fetch)}
         return config_gen
 
 
@@ -47,7 +47,7 @@ if len(dataset) == 0:
 else:
     db = config["DATABASE"]
     vulners_api_key = config["VULNERS"]["vulners_api_key"]
-    threads = config["THREADS"]
+    processes = config["PROCESSES"]
     current_config = Config(
         db["db_host"],
         db["db_port"],
@@ -55,5 +55,5 @@ else:
         db["db_user"],
         db["db_pass"],
         vulners_api_key,
-        threads["thread_limit_update"],
-        threads["thread_limit_fetch"])
+        processes["process_limit_update"],
+        processes["process_limit_fetch"])

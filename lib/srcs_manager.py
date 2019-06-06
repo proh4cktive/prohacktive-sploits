@@ -2,8 +2,7 @@ import os
 import sys
 import re
 import json
-from threading import Thread
-from threading import Event
+import processes
 import time
 
 srcs_dir = "srcs/"
@@ -35,32 +34,6 @@ class SrcModule():
         self.module = module
         self.name = name
 
-# Changing to multiprocessing might be a good idea...
-class CSourceThread(Thread):
-    def __init__(self, module, name, function_name):
-        Thread.__init__(self)
-        self.module = module
-        self.name = name
-        self.function_name = function_name
-        self.event = Event()
-        self.terminated = False
-
-    def run(self):
-        # Get function from module
-        fetch_func = getattr(self.module, self.function_name)
-        # If it's present load it
-        if fetch_func:
-                # Fetch data from the source
-            colors.print_warn("[-] Loading source %s" % self.name)
-            fetch_func()
-            colors.print_success("[x] Loaded source %s" % self.name)
-        else:
-            colors.print_error(
-                "[!] fetch_handler function isn't avaiable on module %s" %
-                self.name)
-        self.event.set()
-        self.terminated = True
-
 
 class SourcesManager():
     def __init__(self):
@@ -68,6 +41,20 @@ class SourcesManager():
         # loaded
         self.str_fetch_func = "fetch_handler"
         self.src_sigs = list()
+
+    def fetchSource(self, module, module_name):
+        # Get function from module
+        fetch_func = getattr(module, self.str_fetch_func)
+        # If it's present load it
+        if fetch_func:
+            # Fetch data from the source
+            colors.print_warn("[-] Loading source %s" % module_name)
+            fetch_func()
+            colors.print_success("[x] Loaded source %s" % module_name)
+        else:
+            colors.print_error(
+                "[!] fetch_handler function isn't avaiable on module %s" %
+                module_name)
 
     def fetchAll(self):
         # Init sources
@@ -91,34 +78,17 @@ class SourcesManager():
                             f[7: -3],
                             runPath + "/" + srcs_dir + f,
                             module))
-        # For each sources call the source handler to fetch data in multiples threads
-        # TODO: Add thread limit aswell for fetching sources in configuration file
-        thread_limit = config.current_config.thread_limit_fetch
-        count_threads = 0
-        thread_count_limit = len(srcs)
-        threads = list()
-        colors.print_warn("[-] Starting %i threads with sources:" % thread_limit)
 
-        while True:
-            # Start x threads by x threads by default
-            threads_len = len(threads)
-            if threads_len < thread_limit and count_threads < thread_count_limit:
-                colors.print_info(srcs[count_threads].name)
-                collection_thread = CSourceThread(
-                    srcs[count_threads].module, srcs[count_threads].name, self.str_fetch_func)
-                collection_thread.start()
-                threads.append(collection_thread)
-                count_threads += 1
-            else:
-                # Wait for the threads terminating
-                for thread in threads:
-                    # Can't use wait() here
-                    if thread.terminated:
-                        threads.remove(thread)
-                    # Sleep 1 millisecond for cpu usage
-                    time.sleep(0.001)
-                if len(threads) == 0:
-                    break
+        # Prepare processes
+        processes_list = list()
+        for src in srcs:
+            processes_list.append(processes.CProcess(src.name,
+                self.fetchSource, src.module, src.name))
+
+        # Handle processes
+        processes_running_limit = config.current_config.process_limit_update
+        processes.handleProcesses(processes_list, processes_running_limit, 0.01)
+
         return 1
 
     def listAll(self):
@@ -128,7 +98,6 @@ class SourcesManager():
             if f.endswith(".dat") or f.endswith(".sig"):
                 continue
             if os.path.isfile(getFetchedSrcsDir() + f):
-                colors.print_info("[-] Found source to update %s" % f)
                 srcs.append(f)
         return srcs
 
@@ -136,9 +105,7 @@ class SourcesManager():
         self.src_sigs = list()
         for f in os.listdir(getFetchedSrcsDir()):
             if os.path.isfile(getFetchedSrcsDir() + f + ".sig"):
-                filename_sig = open(getFetchedSrcsDir() + f + ".sig", "rb")
-                signature = filename_sig.read()
-                filename_sig.close()
+                filename_sig = src_helper.readSourceSig(f)
                 self.src_sigs.append({"_id": f, "sig": signature})
         return self.src_sigs
 

@@ -1,19 +1,19 @@
-# ----- prohacktive.conf -----
-# Host of mongodb
+
+# ----- prohacktive.conf ----- #
 
 [DATABASE]
 db_host = localhost
 db_port = 27017
 db_name = prohacktive
-db_user =
-db_pass =
+db_user = 
+db_pass = 
 
 [VULNERS]
 # Vulners.com API Key
-vulners_api_key = 
+vulners_api_key =
 
-[THREADS]
-# Limit threads for source updating
-thread_limit_update = 8
-# Limit threads for source fetching
-thread_limit_fetch = 8
+[PROCESSES]
+# Limit processes for source updating
+process_limit_update = 16
+# Limit processes for source fetching
+process_limit_fetch = 16

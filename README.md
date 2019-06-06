@@ -24,9 +24,8 @@ sudo pip install -U -r requirements
 ```bash
 sudo vim /etc/prohacktive.conf
 
-# ----- prohacktive.conf -----
+# ----- prohacktive.conf ----- #
 
-# Host of mongodb
 [DATABASE]
 db_host = localhost
 db_port = 27017
@@ -38,11 +37,11 @@ db_pass = <your pass leave empty otherwhise>
 # Vulners.com API Key
 vulners_api_key = XXXXXXXXXXXXXXXXXXXXXX
 
-[THREADS]
-# Limit threads for source updating
-thread_limit_update = 8
-# Limit threads for source fetching
-thread_limit_fetch = 8
+[PROCESSES]
+# Limit processes for source updating
+process_limit_update = 8
+# Limit processes for source fetching
+process_limit_fetch = 8
 ```
 
 - To fetch us all the sources:
