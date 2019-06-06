@@ -13,7 +13,7 @@ colors.print_info("[-] ProHacktive fetching running...")
 srcsmanager = SourcesManager()
 if srcsmanager.fetch_all():
     colors.print_info("[-] Sources generated signatures:")
-    for source in srcsmanager.readSrcsSigs():
+    for source in srcsmanager.read_srcs_sigs():
         colors.print_info("     Source Name: %s -> %s" % (source["_id"], source["sig"]))
     colors.print_success("[x] ProHacktive fetching done!")
 else:
