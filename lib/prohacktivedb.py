@@ -59,26 +59,44 @@ class ProHacktiveDB():
     def list_collections(self):
         return self.collections.list_collections()
 
-    # Search exploit by id
-    def search_exploit_id(self, unique_id):
-        result = dict()
+    def get_sources_collections_name(self):
+        collections_name = list()
         for collection_name in self.collections.list_collection_names():
             if collection_name in self.collection_blacklist():
                 continue
+            collections_name.append(collection_name)
+        return collections_name
+
+    # Search exploit by id
+    def search_exploit_id(self, unique_id, collection_name=None):
+        result = list()
+        # If no collection name was precised we append
+        # For each sources the exploit found
+        if not collection_name:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                result.append(
+                    (self.search_exploit_id(
+                        unique_id,
+                        collection_name),
+                        collection_name))
+        else:
+            # Otherwhise we just find the exploit in the source
             collection = self.get_collection(collection_name)
-            result[collection.name()] = collection.find({"_id": unique_id})
+            result = collection.find({"_id": unique_id})
         return result
 
-    # Return a tuple of Unique IDs or CVE IDs with source name
-    def search_text_all_exploits(self, searched_text):
+    # Can return a list of exploits ID or a tuple of list of exploits ID
+    # and source name
+    def search_text_in_exploits(self, searched_text, collection_name=None):
         exploits_id = list()
-        for collection_name in self.collections.list_collection_names():
-            if collection_name in self.collection_blacklist():
-                continue
+        # If the source is precised we append all the exploits ID
+        # That corresponds to our
+        if collection_name:
             collection = self.get_collection(collection_name)
-            # Get all data to find
+            # Get all data to find into the text
             text_exploits = collection.find()
-            # Load json
+            # Load json text
             exploits = json.loads(text_exploits)
             # For each exploit find the text
             for exploit in exploits:
@@ -86,7 +104,53 @@ class ProHacktiveDB():
                 text_exploit = str(exploit)
                 # We found in the exploit the text
                 if searched_text in text_exploit:
-                    exploits_id.append((exploit["_id"], collection_name))
+                    exploits_id.append(exploit["_id"])
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                exploits_id.append(
+                    (self.search_text_in_exploits(
+                        searched_text,
+                        collection_name),
+                        collection_name))
+
+        return exploits_id
+
+    # Can return a list of exploits ID or a tuple of list of exploits ID
+    # and source name
+    def search_exploit_software(
+            self, software_name=None, version=None, operator=None,
+            collection_name=None):
+
+        exploits_id = list()
+        # If collection name exists
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            find_query = dict()
+            # Append different search if precised
+            if version:
+                find_query["_source.affectedSoftware.version"] = version
+            if operator:
+                find_query["_source.affectedSoftware.operator"] = operator
+            if software_name:
+                find_query["_source.affectedSoftware.name"] = software_name
+            # Search wasn't precised
+            if not find_query.keys():
+                raise "search_exploit_software: not enough arguments"
+            found_exploits = collection.find(find_query)
+            for found_exploit in found_exploits:
+                exploits_id.append(found_exploit["_id"])
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                exploits_id.append(
+                    (self.search_exploit_software(
+                        software_name,
+                        version,
+                        operator,
+                        collection_name),
+                        collection_name))
+
         return exploits_id
 
     def insert_exploit(self, exploit, collection_name):
@@ -134,10 +198,12 @@ class ProHacktiveDB():
             colors.print_error(e)
             # If it doesn't exist, insert it
             if result.matched_count == 0:
+
                 self.insert_src_sig(src_name, sig)
 
     def get_srcs_sigs(self):
-        return list(self.get_collection(self.get_srcs_sigs_collection_name()).find())
+        return list(self.get_collection(
+            self.get_srcs_sigs_collection_name()).find())
 
     def update_srcs_sigs(self, src_sigs):
         for src_sig in src_sigs:
@@ -190,7 +256,8 @@ class ProHacktiveDB():
         return "statistics"
 
     def collection_blacklist(self):
-        return [self.get_srcs_sigs_collection_name(), self.get_stats_collection_name()]
+        return [self.get_srcs_sigs_collection_name(
+        ), self.get_stats_collection_name()]
 
     def __del__(self):
         # Inserts stats at the end of connection
