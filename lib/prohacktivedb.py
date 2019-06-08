@@ -185,7 +185,7 @@ class ProHacktiveDB():
                 result.append((collection.find({"_id":reference_id}), collection_name))
         return result
 
-    # Returns for each exploits a tuple of exploits ID and sourcename
+    # Returns for each exploits a tuple of exploits and sourcename
     def search_exploits_id_references(self, exploits_id):
         result = list()
         for exploit_id in exploits_id:
