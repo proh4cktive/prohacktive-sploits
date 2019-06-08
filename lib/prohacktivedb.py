@@ -67,8 +67,8 @@ class ProHacktiveDB():
             collections_name.append(collection_name)
         return collections_name
 
-    # Search exploit by id
-    def search_exploit_id(self, unique_id, collection_name=None):
+    # Search exploit by id, return list of exploits (list should never be greater than 1)
+    def search_exploit(self, unique_id, collection_name=None):
         result = list()
         # If no collection name was precised we append
         # For each sources the exploit found
@@ -76,7 +76,7 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 result.append(
-                    (self.search_exploit_id(
+                    (self.search_exploit(
                         unique_id,
                         collection_name),
                         collection_name))
@@ -106,6 +106,8 @@ class ProHacktiveDB():
                 if searched_text in text_exploit:
                     exploits_id.append(exploit["_id"])
         else:
+            # Otherwhise recursively search text in exploits in every
+            # sources
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 exploits_id.append(
@@ -137,10 +139,11 @@ class ProHacktiveDB():
             # Search wasn't precised
             if not find_query.keys():
                 raise "search_exploit_software: not enough arguments"
-            found_exploits = collection.find(find_query)
+            found_exploits = collection.find(find_query, {"_id": 1})
             for found_exploit in found_exploits:
                 exploits_id.append(found_exploit["_id"])
         else:
+            # Otherwhise recursively search software in every sources
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 exploits_id.append(
@@ -152,6 +155,42 @@ class ProHacktiveDB():
                         collection_name))
 
         return exploits_id
+
+    # Get all references from an exploit ID
+    def search_exploit_id_references_id(self, exploit_id):
+        references = list()
+        collections_name = self.get_sources_collections_name()
+        for collection_name in collections_name:
+            collection = self.get_collection(collection_name)
+            # For each collections find the exploit ID
+            exploits = collection.find({"_id": exploit_id}, {
+                                       "_id": 0, "_source.enchantments.dependencies.references.idList": 1})
+            # Append references
+            for exploit in exploits:
+                exploit_references = exploit["_source"]["enchantments"]["dependencies"]["references"]
+                for exploit_reference in exploit_references:
+                    exploits_refs_id = exploit_reference["idList"]
+                    for exploit_ref_id in exploits_refs_id: 
+                        references.append(exploit_ref_id)
+        return references
+
+    # Returns a tuple of exploits and source name
+    def search_exploit_id_references(self, exploit_id):
+        references_id = self.search_exploit_id_references_id(exploit_id)
+        result = list()
+        collections_name = self.get_sources_collections_name()
+        for reference_id in references_id:
+            for collection_name in collections_name:
+                collection = self.get_collection(collection_name)
+                result.append((collection.find({"_id":reference_id}), collection_name))
+        return result
+
+    # Returns for each exploits a tuple of exploits ID and sourcename
+    def search_exploits_id_references(self, exploits_id):
+        result = list()
+        for exploit_id in exploits_id:
+            result.append(self.search_exploit_id_references(exploit_id))
+        return result
 
     def insert_exploit(self, exploit, collection_name):
         collection = self.get_collection(collection_name)
@@ -245,7 +284,7 @@ class ProHacktiveDB():
     def update_remote_stats(self):
         collection_stats = self.get_collection(self.get_stats_collection_name())
         for stats in self.stats:
-            stats_dict = stats.genDict()
+            stats_dict = stats.gen_dict()
             collection_stats.insert_one(stats_dict)
 
     # Others collections name methods etc..

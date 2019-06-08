@@ -116,7 +116,6 @@ def write_source_sig(sourcename, data):
     sourcename = get_fetched_srcs_dir() + sourcename + ".sig"
     write_file_bytes(sourcename, data)
 
-
 class SourceHelper():
     def __init__(self, url):
         self.url = url

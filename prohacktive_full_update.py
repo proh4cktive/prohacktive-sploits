@@ -55,7 +55,7 @@ else:
     colors.print_info("[-] Updating sources")
 
     processes_list = list()
-
+    
     # Prepare processes for each sources
     for src_name in srcs_name:
         processes_list.append(
