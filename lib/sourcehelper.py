@@ -46,7 +46,7 @@ def is_file_compressed(filename):
 
 def make_sig(data):
     if not isinstance(data, bytearray):
-        raise "Expected the data to be a bytearray"
+        raise Exception("Expected the data to be a bytearray")
     h = hashlib.sha256(data).hexdigest()
     return bytearray(h.encode("ascii"))
 
@@ -83,7 +83,7 @@ def read_file_bytes(filename):
 
 def write_file_bytes(filename, data):
     if not isinstance(data, bytearray):
-        raise "Expected the data to be a bytearray"
+        raise Exception("Expected the data to be a bytearray")
     file = open(filename, "wb")
     file.write(data)
     file.close()

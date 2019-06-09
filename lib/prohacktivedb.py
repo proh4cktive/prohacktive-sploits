@@ -138,7 +138,7 @@ class ProHacktiveDB():
                 find_query["_source.affectedSoftware.name"] = software_name
             # Search wasn't precised
             if not find_query.keys():
-                raise "search_exploit_software: not enough arguments"
+                raise Exception("search_exploit_software: not enough arguments")
             found_exploits = collection.find(find_query, {"_id": 1})
             for found_exploit in found_exploits:
                 exploits_id.append(found_exploit["_id"])
@@ -156,8 +156,167 @@ class ProHacktiveDB():
 
         return exploits_id
 
+    # Date format: year-month-dayThour-minute-second
+    # Example: 2016-09-26T17:22:32
+    # Returns a tuple of exploits ID and sourcename or list of exploits ID
+    def search_exploits_id_by_published_date(self, min_date=None, max_date=None, collection_name=None):
+        result = list()
+        if not min_date and not max_date:
+            raise Exception("min_date and max_date were not set!")
+
+        find_query = dict()
+        find_query_date = dict()
+
+        if min_date:
+            find_query_date["$gte"] = min_date
+
+        if max_date:
+            find_query_date["$lt"] = max_date
+
+        # Insert query between dates
+        find_query["_source.published"] = find_query_date
+
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            result = collection.find(find_query, {"_id": 1})
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                collection = self.get_collection(collection_name)
+                self.search_exploits_id_by_published_date(
+                    min_date, max_date, collection_name)
+        return result
+
+    # Date format: year-month-dayThour-minute-second
+    # Example: 2016-09-26T17:22:32
+    # Returns a tuple of exploits ID and sourcename or list of exploits ID
+    def search_exploits_id_by_modified_date(self, min_date=None, max_date=None, collection_name=None):
+        result = list()
+        if not min_date and not max_date:
+            raise Exception("min_date and max_date were not set!")
+
+        find_query = dict()
+        find_query_date = dict()
+
+        if min_date:
+            find_query_date["$gte"] = min_date
+
+        if max_date:
+            find_query_date["$lt"] = max_date
+
+        # Insert query between dates
+        find_query["_source.modified"] = find_query_date
+
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            result = collection.find(find_query, {"_id": 1})
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                collection = self.get_collection(collection_name)
+                self.search_exploits_id_by_modified_date(
+                    min_date, max_date, collection_name)
+        return result
+
+    # Search exploits ID by score between 0 & 10
+    def search_exploits_by_score(self, min_score=None, max_score=None, collection_name=None):
+        result = list()
+        if not min_score and not max_score:
+            raise Exception("min_score and max_score were not set!")
+
+        find_query = dict()
+        find_query_score = dict()
+
+        if min_score:
+            find_query_score["$gte"] = min_score
+
+        if max_score:
+            find_query_score["$lt"] = max_score
+
+        # Insert query between dates
+        find_query["_source.enchantments.score.value"] = find_query_score
+
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            result = collection.find(find_query, {"_id": 1})
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                collection = self.get_collection(collection_name)
+                self.search_exploits_by_score(
+                    min_score, max_score, collection_name)
+
+        return result
+
+    def search_exploit_by_lastseen_date(self, min_date=None, max_date=None, collection_name=None):
+        result = list()
+        if not min_date and not max_date:
+            raise Exception("min_date and max_date were not set!")
+
+        find_query = dict()
+        find_query_date = dict()
+
+        if min_date:
+            find_query_date["$gte"] = min_date
+
+        if max_date:
+            find_query_date["$lt"] = max_date
+
+        # Insert query between dates
+        find_query["_source.lastseen"] = find_query_date
+
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            result = collection.find(find_query, {"_id": 1})
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                collection = self.get_collection(collection_name)
+                self.search_exploit_by_lastseen_date(
+                    min_date, max_date, collection_name)
+        return result
+
+    def get_exploits_ids_from_source(self, collection_name):
+        collection = self.get_collection(collection_name)
+        return collection.find({}, {"_id": 1})
+
+    def get_description_exploit_id(self, exploit_id, collection_name=None):
+        result = list()
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            exploits = collection.find({"_id": exploit_id}, {
+                                       "_source.description": 1})
+            for exploit in exploits:
+                result.append(exploit["_source.description"])
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                collection = self.get_collection(collection_name)
+                result.append(self.get_description_exploit_id(
+                    exploit_id, collection_name))
+        return result
+
+    def get_references_links_exploit_id(self, exploit_id, collection_name=None):
+        result = list()
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            exploits = collection.find({"_id": exploit_id}, {
+                                       "_source.references": 1})
+            for exploit in exploits:
+                ref_links = exploit["_source.references"]
+                # Sometimes it is a list of links
+                for ref_link in ref_links:
+                    result.append(ref_link)
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                collection = self.get_collection(collection_name)
+                result.append(self.get_references_links_exploit_id(
+                    exploit_id, collection_name))
+        return result
+
     # Get all references from an exploit ID
-    def search_exploit_id_references_id(self, exploit_id):
+    def get_references_id_from_exploit_id(self, exploit_id):
         references = list()
         collections_name = self.get_sources_collections_name()
         for collection_name in collections_name:
@@ -170,26 +329,27 @@ class ProHacktiveDB():
                 exploit_references = exploit["_source"]["enchantments"]["dependencies"]["references"]
                 for exploit_reference in exploit_references:
                     exploits_refs_id = exploit_reference["idList"]
-                    for exploit_ref_id in exploits_refs_id: 
+                    for exploit_ref_id in exploits_refs_id:
                         references.append(exploit_ref_id)
         return references
 
     # Returns a tuple of exploits and source name
-    def search_exploit_id_references(self, exploit_id):
-        references_id = self.search_exploit_id_references_id(exploit_id)
+    def get_references_from_exploit_id(self, exploit_id):
+        references_id = self.get_references_id_from_exploit_id(exploit_id)
         result = list()
         collections_name = self.get_sources_collections_name()
         for reference_id in references_id:
             for collection_name in collections_name:
-                collection = self.get_collection(collection_name)
-                result.append((collection.find({"_id":reference_id}), collection_name))
+                result.append(
+                    (self.search_exploit(reference_id, collection_name),
+                     collection_name))
         return result
 
     # Returns for each exploits a tuple of exploits and sourcename
-    def search_exploits_id_references(self, exploits_id):
+    def get_references_from_exploits_id(self, exploits_id):
         result = list()
         for exploit_id in exploits_id:
-            result.append(self.search_exploit_id_references(exploit_id))
+            result.append(self.get_references_from_exploit_id(exploit_id))
         return result
 
     def insert_exploit(self, exploit, collection_name):
@@ -237,7 +397,6 @@ class ProHacktiveDB():
             colors.print_error(e)
             # If it doesn't exist, insert it
             if result.matched_count == 0:
-
                 self.insert_src_sig(src_name, sig)
 
     def get_srcs_sigs(self):
@@ -276,7 +435,7 @@ class ProHacktiveDB():
             self.stats.append(Statistics(name))
             return index
         else:
-            raise "Couldn't find stats %s" % name
+            raise Exception("Couldn't find stats %s" % name)
 
     def find_local_stats(self, name, create_not_found=True):
         return self.stats[self.find_index_local_stats(name, create_not_found)]
