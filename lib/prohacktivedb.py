@@ -67,7 +67,7 @@ class ProHacktiveDB():
             collections_name.append(collection_name)
         return collections_name
 
-    # Search exploit by id, return list of exploits (list should never be greater than 1)
+    # Search exploit by id, return list of exploits ID or tuple of exploits ID and source
     def search_exploit(self, unique_id, collection_name=None):
         result = list()
         # If no collection name was precised we append
@@ -75,15 +75,17 @@ class ProHacktiveDB():
         if not collection_name:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                result.append(
-                    (self.search_exploit(
-                        unique_id,
-                        collection_name),
-                        collection_name))
+                exploits = self.search_exploit(
+                    unique_id,
+                    collection_name)
+                if len(exploits) != 0:
+                    result.append((exploits, collection_name))
         else:
             # Otherwhise we just find the exploit in the source
             collection = self.get_collection(collection_name)
-            result = collection.find({"_id": unique_id})
+            exploits = collection.find({"_id": unique_id})
+            for exploit in exploits:
+                result.append(exploit)
         return result
 
     # Can return a list of exploits ID or a tuple of list of exploits ID
@@ -96,6 +98,9 @@ class ProHacktiveDB():
             collection = self.get_collection(collection_name)
             # Get all data to find into the text
             text_exploits = collection.find()
+            # Collection name doesn't exist?
+            if not text_exploits:
+                return
             # Load json text
             exploits = json.loads(text_exploits)
             # For each exploit find the text
@@ -110,11 +115,12 @@ class ProHacktiveDB():
             # sources
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                exploits_id.append(
-                    (self.search_text_in_exploits(
-                        searched_text,
-                        collection_name),
-                        collection_name))
+                searched_exploits = self.search_text_in_exploits(
+                    searched_text,
+                    collection_name)
+                # Do not append if it didn't find anything
+                if len(searched_exploits) != 0:
+                    exploits_id.append((searched_exploits, collection_name))
 
         return exploits_id
 
@@ -146,13 +152,14 @@ class ProHacktiveDB():
             # Otherwhise recursively search software in every sources
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                exploits_id.append(
-                    (self.search_exploits_id_by_software(
-                        software_name,
-                        version,
-                        operator,
-                        collection_name),
-                        collection_name))
+                softwares_affected = self.search_exploits_id_by_software(
+                    software_name,
+                    version,
+                    operator,
+                    collection_name)
+                # Do not append if we have 0 softwares affected
+                if len(softwares_affected) != 0:
+                    exploits_id.append((softwares_affected, collection_name))
 
         return exploits_id
 
@@ -178,13 +185,18 @@ class ProHacktiveDB():
 
         if collection_name:
             collection = self.get_collection(collection_name)
-            result = collection.find(find_query, {"_id": 1})
+            exploits_id = collection.find(find_query, {"_id": 1})
+            for exploit_id in exploits_id:
+                result.append(exploit_id["_id"])
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                self.search_exploits_id_by_published_date(
+                exploits = self.search_exploits_id_by_published_date(
                     min_date, max_date, collection_name)
+                if len(exploits) != 0:
+                    result.append(exploits)
+
         return result
 
     # Date format: year-month-dayThour-minute-second
@@ -209,13 +221,18 @@ class ProHacktiveDB():
 
         if collection_name:
             collection = self.get_collection(collection_name)
-            result = collection.find(find_query, {"_id": 1})
+            exploits_id = collection.find(find_query, {"_id": 1})
+            for exploit_id in exploits_id:
+                result.append(exploit_id["_id"])
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                self.search_exploits_id_by_modified_date(
+                exploits = self.search_exploits_id_by_modified_date(
                     min_date, max_date, collection_name)
+                if len(exploits) != 0:
+                    result.append(exploits)
+
         return result
 
     # Search exploits ID by score between 0 & 10
@@ -238,13 +255,17 @@ class ProHacktiveDB():
 
         if collection_name:
             collection = self.get_collection(collection_name)
-            result = collection.find(find_query, {"_id": 1})
+            exploits_id = collection.find(find_query, {"_id": 1})
+            for exploit_id in exploits_id:
+                result.append(exploit_id["_id"])
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                self.search_exploits_by_score(
+                exploits = self.search_exploits_by_score(
                     min_score, max_score, collection_name)
+                if len(exploits) != 0:
+                    result.append(exploits)
 
         return result
 
@@ -267,18 +288,27 @@ class ProHacktiveDB():
 
         if collection_name:
             collection = self.get_collection(collection_name)
-            result = collection.find(find_query, {"_id": 1})
+            exploits_id = collection.find(find_query, {"_id": 1})
+            for exploit_id in exploits_id:
+                result.append(exploit_id["_id"])
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                self.search_exploit_by_lastseen_date(
+                exploits = self.search_exploit_by_lastseen_date(
                     min_date, max_date, collection_name)
+                if len(exploits) != 0:
+                    result.append(exploits)
+
         return result
 
     def get_exploits_id_from_source(self, collection_name):
+        result = list()
         collection = self.get_collection(collection_name)
-        return collection.find({}, {"_id": 1})
+        exploits = collection.find({}, {"_id": 1})
+        for exploit in exploits:
+            result.append(exploit["_id"])
+        return result
 
     def get_description_from_exploit_id(self, exploit_id, collection_name=None):
         result = list()
@@ -292,8 +322,10 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                result.append((self.get_description_from_exploit_id(
-                    exploit_id, collection_name), collection_name))
+                exploits = self.get_description_from_exploit_id(
+                    exploit_id, collection_name)
+                if len(exploits) != 0:
+                    result.append((exploits, collection_name))
         return result
 
     def get_references_links_from_exploit_id(self, exploit_id, collection_name=None):
@@ -311,8 +343,10 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                result.append((self.get_references_links_from_exploit_id(
-                    exploit_id, collection_name),collection_name))
+                exploits = self.get_references_links_from_exploit_id(
+                    exploit_id, collection_name)
+                if len(exploits) != 0:
+                    result.append((exploits, collection_name))
         return result
 
     # Get all references from an exploit ID
@@ -340,9 +374,10 @@ class ProHacktiveDB():
         collections_name = self.get_sources_collections_name()
         for reference_id in references_id:
             for collection_name in collections_name:
-                result.append(
-                    (self.search_exploit(reference_id, collection_name),
-                     collection_name))
+                result_references = self.search_exploit(
+                    reference_id, collection_name)
+                if len(result_references) != 0:
+                    result.append((result_references, collection_name))
         return result
 
     # Returns for each exploits a tuple of exploits and sourcename
