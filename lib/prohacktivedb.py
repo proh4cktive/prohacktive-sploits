@@ -88,6 +88,24 @@ class ProHacktiveDB():
                 result.append(exploit)
         return result
 
+    # Search exploit with custom query & projection
+    def search_exploit_id_with_query(self, query, proj, collection_name=None):
+        result = list()
+        if not collection_name:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                exploits = self.search_exploit_id_with_query(
+                    query, proj,
+                    collection_name)
+                if len(exploits) != 0:
+                    result.append((exploits, collection_name))
+        else:
+            collection = self.get_collection(collection_name)
+            exploits = collection.find(query, proj)
+            for exploit in exploits:
+                result.append(exploit)
+        return result
+
     # Can return a list of exploits ID or a tuple of list of exploits ID
     # and source name
     def search_text_in_exploits(self, searched_text, collection_name=None):
