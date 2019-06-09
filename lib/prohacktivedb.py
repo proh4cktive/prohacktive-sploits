@@ -292,8 +292,8 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                result.append(self.get_description_from_exploit_id(
-                    exploit_id, collection_name))
+                result.append((self.get_description_from_exploit_id(
+                    exploit_id, collection_name), collection_name))
         return result
 
     def get_references_links_from_exploit_id(self, exploit_id, collection_name=None):
@@ -311,8 +311,8 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                result.append(self.get_references_links_from_exploit_id(
-                    exploit_id, collection_name))
+                result.append((self.get_references_links_from_exploit_id(
+                    exploit_id, collection_name),collection_name))
         return result
 
     # Get all references from an exploit ID
