@@ -120,7 +120,7 @@ class ProHacktiveDB():
 
     # Can return a list of exploits ID or a tuple of list of exploits ID
     # and source name
-    def search_exploit_software(
+    def search_exploits_id_by_software(
             self, software_name=None, version=None, operator=None,
             collection_name=None):
 
@@ -147,7 +147,7 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 exploits_id.append(
-                    (self.search_exploit_software(
+                    (self.search_exploits_id_by_software(
                         software_name,
                         version,
                         operator,
@@ -276,34 +276,34 @@ class ProHacktiveDB():
                     min_date, max_date, collection_name)
         return result
 
-    def get_exploits_ids_from_source(self, collection_name):
+    def get_exploits_id_from_source(self, collection_name):
         collection = self.get_collection(collection_name)
         return collection.find({}, {"_id": 1})
 
-    def get_description_exploit_id(self, exploit_id, collection_name=None):
+    def get_description_from_exploit_id(self, exploit_id, collection_name=None):
         result = list()
         if collection_name:
             collection = self.get_collection(collection_name)
-            exploits = collection.find({"_id": exploit_id}, {
-                                       "_source.description": 1})
+            exploits = collection.find({"_id": exploit_id},
+                                       {"_id": 0, "_source.description": 1})
             for exploit in exploits:
-                result.append(exploit["_source.description"])
+                result.append(exploit["_source"]["description"])
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                result.append(self.get_description_exploit_id(
+                result.append(self.get_description_from_exploit_id(
                     exploit_id, collection_name))
         return result
 
-    def get_references_links_exploit_id(self, exploit_id, collection_name=None):
+    def get_references_links_from_exploit_id(self, exploit_id, collection_name=None):
         result = list()
         if collection_name:
             collection = self.get_collection(collection_name)
             exploits = collection.find({"_id": exploit_id}, {
-                                       "_source.references": 1})
+                                       "_id": 0, "_source.references": 1})
             for exploit in exploits:
-                ref_links = exploit["_source.references"]
+                ref_links = exploit["_source"]["references"]
                 # Sometimes it is a list of links
                 for ref_link in ref_links:
                     result.append(ref_link)
@@ -311,7 +311,7 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                result.append(self.get_references_links_exploit_id(
+                result.append(self.get_references_links_from_exploit_id(
                     exploit_id, collection_name))
         return result
 
