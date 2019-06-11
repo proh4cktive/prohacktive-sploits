@@ -89,12 +89,12 @@ class ProHacktiveDB():
         return result
 
     # Search exploit with custom query & projection
-    def search_exploit_id_with_query(self, query, proj, collection_name=None):
+    def search_exploits_id_with_query(self, query, proj, collection_name=None):
         result = list()
         if not collection_name:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                exploits = self.search_exploit_id_with_query(
+                exploits = self.search_exploits_id_with_query(
                     query, proj,
                     collection_name)
                 if len(exploits) != 0:

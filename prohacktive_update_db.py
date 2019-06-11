@@ -23,11 +23,14 @@ def source_update(src_name):
     source_remote_sig = phdb.find_src_sig_from_name(src_name)
 
     if source_local_sig == source_remote_sig:
-        colors.print_info("[-] No updates on %s, skipping" % src_name)
+        colors.print_info("[-] Same file signature on %s (%s-%s), skipping" %
+                          (src_name, source_local_sig, source_remote_sig))
         return
 
     # Get time from the top newest update
     update_date_remote = phdb.find_src_dat_from_name(src_name)
+    update_date_remote = datetime.strptime(
+        update_date_remote, "%Y-%m-%dT%H:%M:%S")
 
     # Find first the top newest updates on local
     # Read source data
@@ -44,7 +47,9 @@ def source_update(src_name):
             exploit_lastseen_date, exploit_modified_date, exploit_published_date)
         # If the date is higher than the last source fetching date on remote,
         # we append the exploits we need to update/insert
-        if exploit_update_date > update_date_remote:
+        exploit_date_local = datetime.strptime(
+            exploit_update_date, "%Y-%m-%dT%H:%M:%S")
+        if exploit_date_local > update_date_remote:
             exploits_to_update.append(exploit)
 
     if len(exploits_to_update) == 0:
