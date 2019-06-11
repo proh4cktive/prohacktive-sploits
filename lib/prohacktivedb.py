@@ -213,7 +213,7 @@ class ProHacktiveDB():
                 exploits = self.search_exploits_id_by_published_date(
                     min_date, max_date, collection_name)
                 if len(exploits) != 0:
-                    result.append(exploits)
+                    result.append((exploits, collection_name))
 
         return result
 
@@ -249,7 +249,7 @@ class ProHacktiveDB():
                 exploits = self.search_exploits_id_by_modified_date(
                     min_date, max_date, collection_name)
                 if len(exploits) != 0:
-                    result.append(exploits)
+                    result.append((exploits, collection_name))
 
         return result
 
@@ -283,7 +283,7 @@ class ProHacktiveDB():
                 exploits = self.search_exploits_by_score(
                     min_score, max_score, collection_name)
                 if len(exploits) != 0:
-                    result.append(exploits)
+                    result.append((exploits, collection_name))
 
         return result
 
@@ -316,7 +316,7 @@ class ProHacktiveDB():
                 exploits = self.search_exploit_by_lastseen_date(
                     min_date, max_date, collection_name)
                 if len(exploits) != 0:
-                    result.append(exploits)
+                    result.append((exploits, collection_name))
 
         return result
 
