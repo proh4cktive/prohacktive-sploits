@@ -42,9 +42,9 @@ def source_update(src_name):
         # Get the min date between all those dates
         exploit_update_date = min(
             exploit_lastseen_date, exploit_modified_date, exploit_published_date)
-        # If the date is lower than the last source fetching date on remote,
+        # If the date is higher than the last source fetching date on remote,
         # we append the exploits we need to update/insert
-        if exploit_update_date < update_date_remote:
+        if exploit_update_date > update_date_remote:
             exploits_to_update.append(exploit)
 
     if len(exploits_to_update) == 0:
