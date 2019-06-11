@@ -412,8 +412,8 @@ class ProHacktiveDB():
             collection.insert_one(exploit)
         except pymongo.errors.PyMongoError as e:
             colors.print_error(e)
-            stats = self.find_local_stats(collection_name)
-            stats.exploit_inserts.append(exploit["_id"])
+        stats = self.find_local_stats(collection_name)
+        stats.exploit_inserts.append(exploit["_id"])
 
     def update_exploit(self, exploit, collection_name):
         collection = self.get_collection(collection_name)
@@ -425,12 +425,26 @@ class ProHacktiveDB():
         except pymongo.errors.PyMongoError as e:
             colors.print_error(e)
 
-            # If it doesn't exist, insert it
-            if result.matched_count == 0:
-                self.insert_exploit(exploit, collection_name)
-            else:
-                stats = self.find_local_stats(collection_name)
-                stats.exploit_updates.append(exploit["_id"])
+        # If it doesn't exist, insert it
+        if result.matched_count == 0:
+            self.insert_exploit(exploit, collection_name)
+        else:
+            stats = self.find_local_stats(collection_name)
+            stats.exploit_updates.append(exploit["_id"])
+
+    def insert_exploits(self, exploits, collection_name):
+        collection = self.get_collection(collection_name)
+        # TODO: See what kind of fields have been updated
+        try:
+            collection.insert_many(exploits)
+        except pymongo.errors.PyMongoError as e:
+            colors.print_error(e)
+        stats = self.find_local_stats(collection_name)
+        for exploit in exploits:
+            stats.exploit_inserts.append(exploit["_id"])
+
+    # Update many exploits can't be really done because each exploits have very
+    # Specific stuffs anyway
 
     # Signatures methods
     def insert_src_sig(self, src_name, sig):
@@ -461,24 +475,63 @@ class ProHacktiveDB():
             self.update_src_sig(src_sig["_id"], src_sig["sig"])
 
     def find_src_name_from_sig(self, sig):
-        src_sigs = self.get_srcs_sigs()
-        for src_sig in src_sigs:
-            if src_sig["sig"] == sig:
-                return src_sig["_id"]
-        return None
+        collection = self.get_collection(self.get_srcs_sigs_collection_name())
+        # find_one because it should be unique
+        source_found = collection.find_one({"sig": sig})
+        return source_found["_id"]
 
     def find_src_sig_from_name(self, name):
-        src_sigs = self.get_srcs_sigs()
-        for src_sig in src_sigs:
-            if src_sig["_id"] == name:
-                return src_sig["sig"]
-        return None
+        collection = self.get_collection(self.get_srcs_sigs_collection_name())
+        # find_one because it should be unique
+        source_found = collection.find_one({"_id": name})
+        return source_found["sig"]
+
+    # Sources data & informations methods
+    def insert_src_dat(self, src_name, dat):
+        collection = self.get_collection(self.get_srcs_dat_collection_name())
+        try:
+            collection.insert_one({"_id": src_name, "dat": dat})
+        except pymongo.errors.PyMongoError as e:
+            colors.print_error(e)
+
+    def update_src_dat(self, src_name, dat):
+        collection = self.get_collection(self.get_srcs_dat_collection_name())
+        # Try to update first
+        try:
+            result = collection.update_one(
+                {"_id": src_name}, {"$set": {"dat": dat}})
+        except pymongo.errors.PyMongoError as e:
+            colors.print_error(e)
+            # If it doesn't exist, insert it
+            if result.matched_count == 0:
+                self.insert_src_dat(src_name, dat)
+
+    def get_srcs_dat(self):
+        return list(self.get_collection(
+            self.get_srcs_dat_collection_name()).find())
+
+    def update_srcs_dat(self, src_dats):
+        for src_dat in src_dats:
+            self.update_src_dat(src_dat["_id"], src_dat["dat"])
+
+    def find_src_name_from_dat(self, sig):
+        collection = self.get_collection(self.get_srcs_dat_collection_name())
+        # find_one because it should be unique
+        source_found = collection.find_one({"dat": sig})
+        return source_found["_id"]
+
+    def find_src_dat_from_name(self, name):
+        collection = self.get_collection(self.get_srcs_dat_collection_name())
+        # find_one because it should be unique
+        source_found = collection.find_one({"_id": name})
+        return source_found["dat"]
 
     # Stats
     def drop_remote_stats(self):
         self.collections.drop_collection(self.get_stats_collection_name())
 
     def find_index_local_stats(self, name, create_not_found=True):
+        index = -1
         for index in range(len(self.stats)):
             stats = self.stats[index]
             if stats.src_name == name:
@@ -501,18 +554,22 @@ class ProHacktiveDB():
 
     # Others collections name methods etc..
     def get_srcs_sigs_collection_name(self):
-        return "src_signatures"
+        return "sources_signatures"
+
+    def get_srcs_dat_collection_name(self):
+        return "sources_data"
 
     def get_stats_collection_name(self):
-        return "statistics"
+        return "sources_statistics"
 
     def collection_blacklist(self):
         return [self.get_srcs_sigs_collection_name(
-        ), self.get_stats_collection_name()]
+        ), self.get_stats_collection_name(), self.get_srcs_dat_collection_name()]
 
     def __del__(self):
         # Inserts stats at the end of connection
         colors.print_info(
             "[-] Updating stats on %s:%i" %
             (self.host, self.port))
+
         self.update_remote_stats()

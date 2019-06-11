@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import sys
 import json
@@ -12,14 +13,50 @@ import processes
 import sourcehelper
 from sourcesmanager import SourcesManager
 
+
 def source_update(src_name):
     # Need new connection for the new process
     phdb = prohacktivedb.ProHacktiveDB()
-    src_sig = sourcehelper.read_source_sig(src_name)
-    colors.print_info("[-] Inserting source %s signature %s" %
-                      (src_name, src_sig))
 
-    
+    # Read local sources signatures
+    source_local_sig = sourcehelper.read_source_sig(src_name).decode("utf8")
+    source_remote_sig = phdb.find_src_sig_from_name(src_name)
+
+    if source_local_sig == source_remote_sig:
+        colors.print_info("[-] No updates on %s, skipping" % src_name)
+        return
+
+    # Get time from the top newest update
+    update_date_remote = phdb.find_src_dat_from_name(src_name)
+
+    # Find first the top newest updates on local
+    # Read source data
+    source_data = json.loads(sourcehelper.read_source(src_name).decode("utf8"))
+
+    exploits_to_update = list()
+
+    for exploit in source_data:
+        exploit_lastseen_date = exploit["_source"]["lastseen"]
+        exploit_published_date = exploit["_source"]["published"]
+        exploit_modified_date = exploit["_source"]["modified"]
+        # Get the min date between all those dates
+        exploit_update_date = min(
+            exploit_lastseen_date, exploit_modified_date, exploit_published_date)
+        # If the date is lower than the last source fetching date on remote,
+        # we append the exploits we need to update/insert
+        if exploit_update_date < update_date_remote:
+            exploits_to_update.append(exploit)
+
+    if len(exploits_to_update) == 0:
+        raise Exception(
+            "File signature has changed but no exploits to update found")
+
+    # Update all exploits into the list
+    for exploit in exploits_to_update:
+        phdb.update_exploit(exploit, src_name)
+
+    phdb.update_src_sig(src_name, source_local_sig)
+    colors.print_success("[x] Updated %s" % src_name)
 
 
 colors.print_info("[-] ProHacktive updating running...")
@@ -38,7 +75,7 @@ else:
     colors.print_info("[-] Updating sources")
 
     processes_list = list()
-    
+
     # Prepare processes for each sources
     for src_name in srcs_name:
         processes_list.append(

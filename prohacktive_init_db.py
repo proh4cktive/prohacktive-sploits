@@ -20,11 +20,19 @@ srcs_name = SourcesManager().list_all()
 def source_update(src_name):
     # Need new connection for the new process
     phdb = prohacktivedb.ProHacktiveDB()
-    src_sig = sourcehelper.read_source_sig(src_name)
+    src_sig = sourcehelper.read_source_sig(src_name).decode("utf8")
+    src_dat = sourcehelper.read_file_bytes(
+        sourcehelper.get_fetched_srcs_dir() + src_name + ".dat").decode("utf8")
+
     colors.print_info("[-] Inserting source %s signature %s" %
                       (src_name, src_sig))
 
-    phdb.insert_src_sig(src_name, str(src_sig))
+    phdb.insert_src_sig(src_name, src_sig)
+
+    colors.print_info("[-] Inserting source %s dat %s" %
+                      (src_name, src_dat))
+
+    phdb.insert_src_dat(src_name, src_dat)
 
     colors.print_info("[-] Inserting source %s" % src_name)
     src_data = json.loads(sourcehelper.read_source(src_name))
@@ -34,10 +42,9 @@ def source_update(src_name):
 
     colors.print_info("[-] Inserting exploits of %s ..." % src_name)
 
-    for exploit in src_data:
-        phdb.insert_exploit(exploit, src_name)
+    phdb.insert_exploits(src_data, src_name)
 
-    colors.print_success("[x] Updated %s" % (src_name))
+    colors.print_success("[x] Updated %s" % src_name)
 
 
 phdb = prohacktivedb.ProHacktiveDB()
@@ -52,10 +59,16 @@ else:
     colors.print_info("[-] Erasing old signatures")
     phdb.collections.drop_collection(phdb.get_srcs_sigs_collection_name())
 
+    colors.print_info("[-] Erasing old data informations")
+    phdb.collections.drop_collection(phdb.get_srcs_dat_collection_name())
+
+    colors.print_info("[-] Erasing old statistics")
+    phdb.drop_remote_stats()
+
     colors.print_info("[-] Updating sources")
 
     processes_list = list()
-    
+
     # Prepare processes for each sources
     for src_name in srcs_name:
         processes_list.append(
