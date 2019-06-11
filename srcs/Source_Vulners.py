@@ -4,13 +4,13 @@ import vulners
 import json
 import time
 from zipfile import ZipFile
-import processes
 
 runPath = os.path.dirname(os.path.realpath(__file__ + "../../"))
 sys.path.append(runPath + "/lib/")
 
 import config
 import colors
+import processes
 import sourcesmanager
 import sourcehelper
 from datetime import datetime
@@ -21,57 +21,103 @@ vulners_api_key = config.current_config.vulners_api_key
 fetched_srcs = sourcesmanager.get_fetched_srcs_dir()
 
 
-def vulners_source_fetch(api_key, collection_name, datefrom="1950-01-01", dateto="2200-01-01"):
-    time = datetime.now()
-    time = "%i-%i-%iT%i-%i-%i" % (time.year, time.month, time.day,
-                                  time.hour, time.minute, time.second)
+def vulners_source_fetch(api_key, collection_name):
+    source_name = "Vulners_" + collection_name
+    source_file_data = source_name + ".dat"
+    source_file_sig = source_name + ".sig"
+    datetime_now = datetime.now()
+    time_fmt = "%i-%i-%iT%i:%i:%i" % (datetime_now.year, datetime_now.month, datetime_now.day,
+                                      datetime_now.hour, datetime_now.minute, datetime_now.second)
+    important_files_exists = (os.path.isfile(fetched_srcs + source_name)
+                              and os.path.isfile(fetched_srcs + source_file_sig)
+                              and os.path.isfile(fetched_srcs + source_file_data))
 
-    colors.print_info("[-] Downloading %s " % collection_name)
-    vulners_api = vulners.Vulners(api_key)
-    collection = vulners_api.vulners_get_request(
-        'archive', {'type': collection_name})  # , 'datefrom': datefrom, 'dateto': dateto})
+    if important_files_exists:
+        read_source_date = sourcehelper.read_file(
+            fetched_srcs + source_file_data)
+        from_date = str(read_source_date)
+        to_date = time_fmt
 
-    # Decompress zip data
-    with ZipFile(BytesIO(collection)) as zip_file:
-        if len(zip_file.namelist()) > 1:
-            raise Exception("Unexpected file count in Vulners ZIP archive")
-        file_name = zip_file.namelist()[0]
-        collection = bytearray(zip_file.open(file_name).read())
+        colors.print_info("[-] Downloading %s from date %s to date %s" %
+                          (collection_name, from_date, to_date))
 
-    collection_name = "Vulners_" + collection_name
+        vulners_api = vulners.Vulners(api_key)
+        source_update = vulners_api.vulners_get_request(
+            'archive', {'type': collection_name, 'datefrom': from_date})
 
-    src_sig = sourcehelper.make_sig(collection)
+        # Decompress zip data
+        with ZipFile(BytesIO(source_update)) as zip_file:
+            if len(zip_file.namelist()) > 1:
+                raise Exception("Unexpected file count in Vulners ZIP archive")
+            file_name = zip_file.namelist()[0]
+            source_update = bytes(zip_file.open(file_name).read())
 
-    src_read_sig = sourcehelper.read_source_sig(collection_name)
+        source_update = json.loads(source_update.decode("utf8"))
+        source_data = sourcehelper.read_source(source_name).decode("utf8")
+        source_data = json.loads(source_data)
+        
+        # No updates
+        if len(source_update) == 0:
+            colors.print_info("[-] No updates on %s, skipping" % source_name)
+            sourcehelper.write_file(fetched_srcs + source_file_data, to_date)
+            return
+        
+        # Find exploit and update it
+        for exploit_index in range(len(source_data)):
+            for exploit_update in source_update:
+                if source_data[exploit_index]["_id"] == exploit_update["_id"]:
+                    source_data[exploit_index]["_id"] = exploit_update["_id"]
 
-    collection_file_data = collection_name + ".dat"
-
-    # Check if we need to write the file
-    if (os.path.exists(fetched_srcs + collection_file_data)
-        and os.path.exists(fetched_srcs + collection_name + ".sig")
-        and os.path.exists(fetched_srcs + collection_name)
-            and src_sig == src_read_sig):
-        colors.print_info(
-            "[-] Skipped writing to file the source %s, signature didn't change" % collection_name)
-        # Still overwrite the date
-        sourcehelper.write_file_bytes(
-            fetched_srcs + collection_file_data, bytearray(time.encode("ascii")))
-    else:
-        # Write collection date, could be, maybe used for faster updates in future by using the API
-        sourcehelper.write_file_bytes(
-            fetched_srcs + collection_file_data, bytearray(time.encode("ascii")))
         colors.print_info("[-] Saving file signature %s" %
-                          (fetched_srcs + collection_name + ".sig"))
+                          (fetched_srcs + source_file_sig))
+
+        # Re-encode data
+        source_data = bytes(json.dumps(source_data).encode("utf8"))
 
         # Write file signature
-        sourcehelper.write_source_sig(collection_name, src_sig)
+        sourcehelper.write_source_sig(
+            source_name, sourcehelper.make_sig(source_data))
+
+        # Write file date (we might use the date directly from the os but to be sure)
+        sourcehelper.write_file(fetched_srcs + source_file_data, to_date)
 
         colors.print_info(
             "[-] Saving source %s" %
-            (fetched_srcs + collection_name))
+            (fetched_srcs + source_name))
 
-        sourcehelper.write_file_bytes(
-            fetched_srcs + collection_name, collection)
+        sourcehelper.write_source(source_name, source_data)
+
+    else:
+
+        colors.print_info("[-] Downloading %s" % source_name)
+        vulners_api = vulners.Vulners(api_key)
+        collection = vulners_api.vulners_get_request(
+            'archive', {'type': collection_name})
+
+        # Decompress zip data
+        with ZipFile(BytesIO(collection)) as zip_file:
+            if len(zip_file.namelist()) > 1:
+                raise Exception("Unexpected file count in Vulners ZIP archive")
+            file_name = zip_file.namelist()[0]
+            # Reformat document with a json load so it writes correct signature & convert it to bytes
+            collection = bytes(json.dumps(json.loads(zip_file.open(
+                file_name).read().decode("utf8"))).encode("utf8"))
+
+        src_sig = sourcehelper.make_sig(collection)
+
+        # Write collection date, used for faster updates by using the API
+        sourcehelper.write_file(fetched_srcs + source_file_data, time_fmt)
+        colors.print_info("[-] Saving file signature %s" %
+                          (fetched_srcs + source_file_sig))
+
+        # Write file signature
+        sourcehelper.write_source_sig(source_name, src_sig)
+
+        colors.print_info(
+            "[-] Saving source %s" %
+            (fetched_srcs + source_name))
+
+        sourcehelper.write_source(source_name, collection)
 
 
 def fetch_handler():

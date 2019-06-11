@@ -44,11 +44,11 @@ def is_file_compressed(filename):
     return None
 
 
-def make_sig(data):
-    if not isinstance(data, bytearray):
-        raise Exception("Expected the data to be a bytearray")
+def make_sig(data) -> bytes:
+    if not isinstance(data, bytes):
+        raise Exception("Expected the data to be a bytes")
     h = hashlib.sha256(data).hexdigest()
-    return bytearray(h.encode("ascii"))
+    return bytes(h.encode("utf8"))
 
 
 def make_sig_from_file(filename):
@@ -71,19 +71,19 @@ def read_file(filename):
         return None
 
 
-def read_file_bytes(filename):
+def read_file_bytes(filename) -> bytes:
     if os.path.isfile(filename):
         file = open(filename, "rb")
         data = file.read()
         file.close()
-        return bytearray(data)
+        return bytes(data)
     else:
         return None
 
 
 def write_file_bytes(filename, data):
-    if not isinstance(data, bytearray):
-        raise Exception("Expected the data to be a bytearray")
+    if not isinstance(data, bytes):
+        raise Exception("Expected the data to be a bytes")
     file = open(filename, "wb")
     file.write(data)
     file.close()
@@ -97,7 +97,7 @@ def write_file(filename, data):
     return data
 
 
-def read_source(sourcename):
+def read_source(sourcename) -> bytes:
     sourcename = get_fetched_srcs_dir() + sourcename
     return read_file_bytes(sourcename)
 
@@ -107,7 +107,7 @@ def write_source(sourcename, data):
     write_file_bytes(sourcename, data)
 
 
-def read_source_sig(sourcename):
+def read_source_sig(sourcename) -> bytes:
     sourcename = get_fetched_srcs_dir() + sourcename + ".sig"
     return read_file_bytes(sourcename)
 
