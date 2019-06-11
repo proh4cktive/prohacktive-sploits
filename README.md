@@ -66,9 +66,9 @@ This will also for each sources creates a collection inside your database
 ```bash
 python3 prohacktive_update_db.py
 ```
-- After you have updated the source files, you can run this command to update the MongoDB database fastly. If you do it often, it can take 1-3 seconds if not less
+After you have updated the source files, you can run this command to update the MongoDB database fastly. If you do it often, it can take 1-3 seconds if not less
 
-- For helping the analyzing/parsing of a JSON file for the sources that have been fetched you can use this python script this way in a terminal:
+For helping the analyzing/parsing of a JSON file for the sources that have been fetched you can use this python script this way in a terminal:
 
 ```bash
 python3 json_analyzer.py <path to file>
