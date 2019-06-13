@@ -209,7 +209,6 @@ class ProHacktiveDB():
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                collection = self.get_collection(collection_name)
                 exploits = self.search_exploits_id_by_published_date(
                     min_date, max_date, collection_name)
                 if len(exploits) != 0:
@@ -245,7 +244,6 @@ class ProHacktiveDB():
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                collection = self.get_collection(collection_name)
                 exploits = self.search_exploits_id_by_modified_date(
                     min_date, max_date, collection_name)
                 if len(exploits) != 0:
@@ -279,7 +277,6 @@ class ProHacktiveDB():
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                collection = self.get_collection(collection_name)
                 exploits = self.search_exploits_id_by_score(
                     min_score, max_score, collection_name)
                 if len(exploits) != 0:
@@ -312,12 +309,53 @@ class ProHacktiveDB():
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                collection = self.get_collection(collection_name)
                 exploits = self.search_exploits_id_by_lastseen_date(
                     min_date, max_date, collection_name)
                 if len(exploits) != 0:
                     result.append((exploits, collection_name))
 
+        return result
+
+    # Returns a tuple of exploits id and source name
+    # cpe:/ <part>:<vendor>:<product>:<version>:<update>:<edition>:<language>
+    #     "cpe": [
+    #     "cpe:/a:microsoft:windows_server_2012:r2",
+    #     "cpe:/a:microsoft:windows_10:1607",
+    #     "cpe:/o:microsoft:windows_server_2012:r2",
+    #     "cpe:/a:microsoft:windows_10:1511",
+    #     "cpe:/a:microsoft:edge:*",
+    #     "cpe:/a:microsoft:windows_10:-",
+    #     "cpe:/o:microsoft:windows_10:-",
+    #     "cpe:/o:microsoft:windows_server_2012:-",
+    #     "cpe:/o:microsoft:windows_10:1607",
+    #     "cpe:/o:microsoft:windows_10:1511",
+    #     "cpe:/a:microsoft:windows_server_2012:-",
+    #     "cpe:/o:microsoft:windows_8.1:*",
+    #     "cpe:/a:microsoft:windows_8.1:*"
+    # ],
+    # "cpe23": [
+    #     "cpe:2.3:o:microsoft:windows_10:1511:*:*:*:*:*:*:*",
+    #     "cpe:2.3:o:microsoft:windows_server_2012:-:*:*:*:*:*:*:*",
+    #     "cpe:2.3:o:microsoft:windows_server_2012:r2:*:*:*:*:*:*:*",
+    #     "cpe:2.3:a:microsoft:edge:*:*:*:*:*:*:*:*",
+    #     "cpe:2.3:o:microsoft:windows_10:1607:*:*:*:*:*:*:*",
+    #     "cpe:2.3:o:microsoft:windows_8.1:*:*:*:*:*:*:*:*",
+    #     "cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*"
+    # ],
+    def search_exploits_id_by_cpe(self, cpe, collection_name=None):
+        result = list()
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            query_dict = dict()
+            query_dict["_source.cpe"] = {"$regex": cpe}
+            exploits = collection.find(query_dict, {"_id": 1})
+            for exploit in exploits:
+                result.append(exploit["_id"])
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                result.append((self.search_exploits_id_by_cpe(
+                    cpe, collection_name), collection_name))
         return result
 
     def get_exploits_id_from_source(self, collection_name):
@@ -339,7 +377,6 @@ class ProHacktiveDB():
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                collection = self.get_collection(collection_name)
                 exploits = self.get_description_from_exploit_id(
                     exploit_id, collection_name)
                 if len(exploits) != 0:
@@ -360,7 +397,6 @@ class ProHacktiveDB():
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                collection = self.get_collection(collection_name)
                 exploits = self.get_references_links_from_exploit_id(
                     exploit_id, collection_name)
                 if len(exploits) != 0:
