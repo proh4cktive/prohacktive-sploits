@@ -287,7 +287,7 @@ class ProHacktiveDB():
 
         return result
 
-    def search_exploit_id_by_lastseen_date(self, min_date=None, max_date=None, collection_name=None):
+    def search_exploits_id_by_lastseen_date(self, min_date=None, max_date=None, collection_name=None):
         result = list()
         if not min_date and not max_date:
             raise Exception("min_date and max_date were not set!")
@@ -313,7 +313,7 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                exploits = self.search_exploit_id_by_lastseen_date(
+                exploits = self.search_exploits_id_by_lastseen_date(
                     min_date, max_date, collection_name)
                 if len(exploits) != 0:
                     result.append((exploits, collection_name))
