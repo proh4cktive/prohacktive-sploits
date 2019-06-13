@@ -8,8 +8,7 @@ sys.path.append(runPath + "/lib/")
 import colors
 import sourcehelper
 
-source_cve = sourcehelper.read_file_bytes("tmp/fetched_srcs/Vulners_cve")
 
-source_cve = json.loads(source_cve.decode("utf8"))
 
-print("Done %s" % source_cve[0]["_id"])
+if sourcehelper.is_file_compressed("tmp/fetched_srcs/CVESearch"):
+    print("Done")

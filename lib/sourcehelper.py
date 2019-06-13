@@ -16,8 +16,9 @@ temp_dir = runPath + "/tmp/"
 if not os.path.exists(temp_dir):
     os.mkdir(temp_dir)
 
-magic_dict = {"\x1f\x8b\x08": "gz",
-              "\x42\x5a\x68": "bz2", "\x50\x4b\x03\x04": "zip"}
+# File magic number / signatures
+magic_dict = {(0x1f, 0x8b, 0x08, "gz"),
+              (0x42, 0x5a, 0x68, "bz2"), (0x50, 0x4b, 0x03, 0x04, "zip")}
 max_dict_len = max(len(x) for x in magic_dict)
 
 
@@ -30,18 +31,18 @@ if not os.path.exists(get_fetched_srcs_dir()):
 
 
 def is_compressed(data):
-    for magic, filetype in magic_dict.items():
-        if data == magic:
-            return filetype
-    return None
+    for magic in magic_dict:
+        if magic[0] in data:
+            return magic[1]
+    return False
 
 
 def is_file_compressed(filename):
     with open(filename, "rb") as f:
         file_start = f.read(max_dict_len)
         f.close()
-        return is_compressed(file_start.data)
-    return None
+        return is_compressed(file_start)
+    return False
 
 
 def make_sig(data) -> bytes:
@@ -58,7 +59,7 @@ def make_sig_from_file(filename):
         file.close()
         return hashed_file
     else:
-        return None
+        return False
 
 
 def read_file(filename):
@@ -68,7 +69,7 @@ def read_file(filename):
         file.close()
         return data
     else:
-        return None
+        return False
 
 
 def read_file_bytes(filename) -> bytes:
@@ -78,7 +79,7 @@ def read_file_bytes(filename) -> bytes:
         file.close()
         return bytes(data)
     else:
-        return None
+        return False
 
 
 def write_file_bytes(filename, data):
@@ -116,45 +117,55 @@ def write_source_sig(sourcename, data):
     sourcename = get_fetched_srcs_dir() + sourcename + ".sig"
     write_file_bytes(sourcename, data)
 
+
 class SourceHelper():
     def __init__(self, url):
         self.url = url
 
     # Fetch database
-    def fetch(self):
+    def fetch(self) -> bytes:
         try:
             response = requests.get(self.url)
         except requests.RequestException as e:
             colors.print_error("[!]" + e)
-            return None
+            return False
 
         # Get response
         data = response.content
 
         # Check if data is compressed
         if is_compressed(data):
-            temp_filename = "tempfile"
+            colors.print_info("[-] Decompressing %s" % self.url)
             # Write to temporary file the response
             if not os.path.exists(temp_dir):
                 os.mkdir(temp_dir)
-
+            
+            temp_filename = temp_dir + "tempfile"
             # Sadly we need to write it to a file because pyunpack can't yet
             # decompress from binary data directly from memory
-            temp_file = open(temp_dir + temp_filename, "wb")
+            temp_file = open(temp_filename, "wb")
             temp_file.write(data)
             temp_file.close()
 
             # Decompress
-            arch = pyunpack.Archive(temp_dir + temp_filename)
-            arch.extractall(temp_dir)
-            # Read decompressed file and output it
-            # There should be only one file anyway
-            filename = os.listdir(temp_dir)[0]
-            temp_file = open(temp_dir + filename, "rb")
-            data = temp_file.read()
-            temp_file.close()
-            # Don't forget to remove it
-            os.remove(temp_dir + filename)
-            # This one also
-            os.remove(temp_dir + temp_filename)
+            filename = temp_filename
+            archive_dir = temp_dir + "archive/"
+            
+            if not os.path.exists(archive_dir):
+                os.mkdir(archive_dir)
+                        
+            # Sometimes it's compressed multiple times
+            while(True):
+                arch = pyunpack.Archive(filename)
+                arch.extractall(archive_dir)
+                os.remove(filename)
+                filename = archive_dir + os.listdir(archive_dir)[0]
+                compressed = is_file_compressed(filename)
+                if not compressed:
+                    break
+
+        temp_file = open(filename, "rb")
+        data = bytes(temp_file.read())
+        temp_file.close()
+        os.remove(filename)
         return data

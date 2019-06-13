@@ -66,7 +66,9 @@ def vulners_source_fetch(api_key, collection_name):
         for exploit_index in range(len(source_data)):
             for exploit_update in source_update:
                 if source_data[exploit_index]["_id"] == exploit_update["_id"]:
-                    source_data[exploit_index]["_id"] = exploit_update["_id"]
+                    print(str(source_data[exploit_index]["_id"]))
+                    print(str(exploit_update["_id"]))
+                    source_data[exploit_index] = exploit_update
 
         colors.print_info("[-] Saving file signature %s" %
                           (fetched_srcs + source_file_sig))

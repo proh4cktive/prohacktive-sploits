@@ -1,5 +1,6 @@
 colorama
 configparser
+patool
 progressbar
 pymongo
 pyunpack

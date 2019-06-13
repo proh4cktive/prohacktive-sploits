@@ -254,7 +254,7 @@ class ProHacktiveDB():
         return result
 
     # Search exploits ID by score between 0 & 10
-    def search_exploits_by_score(self, min_score=None, max_score=None, collection_name=None):
+    def search_exploits_id_by_score(self, min_score=None, max_score=None, collection_name=None):
         result = list()
         if not min_score and not max_score:
             raise Exception("min_score and max_score were not set!")
@@ -280,14 +280,14 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                exploits = self.search_exploits_by_score(
+                exploits = self.search_exploits_id_by_score(
                     min_score, max_score, collection_name)
                 if len(exploits) != 0:
                     result.append((exploits, collection_name))
 
         return result
 
-    def search_exploit_by_lastseen_date(self, min_date=None, max_date=None, collection_name=None):
+    def search_exploit_id_by_lastseen_date(self, min_date=None, max_date=None, collection_name=None):
         result = list()
         if not min_date and not max_date:
             raise Exception("min_date and max_date were not set!")
@@ -313,7 +313,7 @@ class ProHacktiveDB():
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
                 collection = self.get_collection(collection_name)
-                exploits = self.search_exploit_by_lastseen_date(
+                exploits = self.search_exploit_id_by_lastseen_date(
                     min_date, max_date, collection_name)
                 if len(exploits) != 0:
                     result.append((exploits, collection_name))
