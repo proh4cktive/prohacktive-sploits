@@ -52,13 +52,13 @@ def vulners_source_fetch(api_key, collection_name):
             source_update = bytes(zip_file.open(file_name).read())
 
         source_update = json.loads(source_update.decode("utf8"))
-        
+
         # No updates
         if len(source_update) == 0:
             colors.print_info("[-] No updates on %s, skipping" % source_name)
             sourcehelper.write_file(fetched_srcs + source_file_data, to_date)
             return
-        
+
         source_data = sourcehelper.read_source(source_name).decode("utf8")
         source_data = json.loads(source_data)
 
@@ -66,8 +66,8 @@ def vulners_source_fetch(api_key, collection_name):
         for exploit_index in range(len(source_data)):
             for exploit_update in source_update:
                 if source_data[exploit_index]["_id"] == exploit_update["_id"]:
-                    print(str(source_data[exploit_index]["_id"]))
-                    print(str(exploit_update["_id"]))
+                    # print(str(source_data[exploit_index]))
+                    # print(str(exploit_update))
                     source_data[exploit_index] = exploit_update
 
         colors.print_info("[-] Saving file signature %s" %
