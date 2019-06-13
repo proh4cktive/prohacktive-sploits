@@ -155,11 +155,14 @@ class ProHacktiveDB():
             find_query = dict()
             # Append different search if precised
             if version:
-                find_query["_source.affectedSoftware.version"] = version
+                find_query["_source.affectedSoftware.version"] = {
+                    "$regex": version}
             if operator:
-                find_query["_source.affectedSoftware.operator"] = operator
+                find_query["_source.affectedSoftware.operator"] = {
+                    "$regex": operator}
             if software_name:
-                find_query["_source.affectedSoftware.name"] = software_name
+                find_query["_source.affectedSoftware.name"] = {
+                    "$regex": software_name}
             # Search wasn't precised
             if not find_query.keys():
                 raise Exception("search_exploit_software: not enough arguments")
@@ -354,8 +357,47 @@ class ProHacktiveDB():
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                result.append((self.search_exploits_id_by_cpe(
-                    cpe, collection_name), collection_name))
+                exploits = self.search_exploits_id_by_cpe(
+                    cpe, collection_name)
+                if len(exploits) != 0:
+                    result.append((exploits, collection_name))
+        return result
+
+    def search_exploits_id_by_cpe23(self, cpe, collection_name=None):
+        result = list()
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            query_dict = dict()
+            query_dict["_source.cpe23"] = {"$regex": cpe}
+            exploits = collection.find(query_dict, {"_id": 1})
+            for exploit in exploits:
+                result.append(exploit["_id"])
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                exploits = self.search_exploits_id_by_cpe23(
+                    cpe, collection_name)
+                if len(exploits) != 0:
+                    result.append((exploits, collection_name))
+        return result
+
+    # Returns list of exploits id or tuple of exploits id with source name
+    def get_cvelist_by_exploit_id(self, exploit_id, collection_name=None):
+        result = list()
+        if collection_name:
+            collection = self.get_collection(collection_name)
+            # Maybe using find_one could be better if we're sure that the id exists only once
+            exploits = collection.find({"_id": exploit_id}, {
+                                       "_id": 0, "_source.cvelist": 1})
+            for exploit in exploits:
+                result.extend(exploit["_source"]["cvelist"])
+        else:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                exploits = self.get_cvelist_by_exploit_id(
+                    exploit_id, collection_name)
+                if len(exploits) != 0:
+                    result.append((exploits, collection_name))
         return result
 
     def get_exploits_id_from_source(self, collection_name):
@@ -392,8 +434,7 @@ class ProHacktiveDB():
             for exploit in exploits:
                 ref_links = exploit["_source"]["references"]
                 # Sometimes it is a list of links
-                for ref_link in ref_links:
-                    result.append(ref_link)
+                result.extend(ref_links)
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
@@ -417,8 +458,7 @@ class ProHacktiveDB():
                 exploit_references = exploit["_source"]["enchantments"]["dependencies"]["references"]
                 for exploit_reference in exploit_references:
                     exploits_refs_id = exploit_reference["idList"]
-                    for exploit_ref_id in exploits_refs_id:
-                        references.append(exploit_ref_id)
+                    references.extend(exploits_refs_id)
         return references
 
     # Returns a tuple of exploits and source name
