@@ -150,8 +150,11 @@ def _make_dictionary_of_keys(obj, json_keys):
                             json_keys[key].append(copy)
                             json_keys[key].append(empty_list)
         else:
-            # Maybe there is multiples data type for one field?
-            # Should never happen
+
+            # Sometimes it's just empty...
+            if value == None:
+                continue
+
             if json_keys.get(key):
                 # If it's not a list, then we check if the value
                 # isn't the same as the other value in the field
@@ -243,7 +246,7 @@ def count_dicts(json_obj):
 
 
 # Check if argument is passed
-sys.argv.append("test.json")
+sys.argv.append("tmp/fetched_srcs/Vulners_cve")
 if sys.argv[1]:
 
     # Read json data
