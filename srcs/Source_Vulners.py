@@ -63,12 +63,17 @@ def vulners_source_fetch(api_key, collection_name):
         source_data = json.loads(source_data)
 
         # Find every exploits that needs update into the file and update it
-        for exploit_index in range(len(source_data)):
-            for exploit_update in source_update:
+        for exploit_update in source_update:
+            # By default it's not inserted
+            updated_exploit = False
+            # Check if it has been inserted already
+            for exploit_index in range(len(source_data)):
                 if source_data[exploit_index]["_id"] == exploit_update["_id"]:
-                    # print(str(source_data[exploit_index]))
-                    # print(str(exploit_update))
                     source_data[exploit_index] = exploit_update
+                    updated_exploit = True
+            # If the exploit isn't here, we append it into the file
+            if not updated_exploit:
+                source_data.append(exploit_update)
 
         colors.print_info("[-] Saving file signature %s" %
                           (fetched_srcs + source_file_sig))
