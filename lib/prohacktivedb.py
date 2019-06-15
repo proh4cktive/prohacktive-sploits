@@ -10,24 +10,24 @@ runPath = os.path.dirname(os.path.realpath(__file__ + "../../"))
 
 class Statistics():
     def __init__(self, src_name):
-        self.exploit_updates = list()
-        self.exploit_inserts = list()
+        self.vulnerability_updates = list()
+        self.vulnerability_inserts = list()
         self.src_name = src_name
         # Timestamp at init
         self.timestamp = datetime.now().timestamp()
 
-    def exploit_update(self, exploit_id):
-        self.exploit_updates.append(exploit_id)
+    def vulnerability_update(self, vulnerability_id):
+        self.vulnerability_updates.append(vulnerability_id)
 
-    def exploit_insert(self, exploit_id):
-        self.exploit_inserts.append(exploit_id)
+    def vulnerability_insert(self, vulnerability_id):
+        self.vulnerability_inserts.append(vulnerability_id)
 
     def gen_dict(self):
         dictionary = {
             "source": self.src_name,
             "timestamp": self.timestamp,
-            "inserts": self.exploit_inserts,
-            "updates": self.exploit_updates}
+            "inserts": self.vulnerability_inserts,
+            "updates": self.vulnerability_updates}
         return dictionary
 
 
@@ -67,459 +67,297 @@ class ProHacktiveDB():
             collections_name.append(collection_name)
         return collections_name
 
-    # Search exploit by id, return list of exploits ID or tuple of exploits ID and source
-    def search_exploit(self, unique_id, collection_name=None):
-        result = list()
-        # If no collection name was precised we append
-        # For each sources the exploit found
-        if not collection_name:
-            collections_name = self.get_sources_collections_name()
-            for collection_name in collections_name:
-                exploits = self.search_exploit(
-                    unique_id,
-                    collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
-        else:
-            # Otherwhise we just find the exploit in the source
-            collection = self.get_collection(collection_name)
-            exploits = collection.find({"_id": unique_id})
-            for exploit in exploits:
-                result.append(exploit)
-        return result
-
-    # Search exploit with custom query & projection
-    def search_exploits_id_with_query(self, query, proj, collection_name=None):
+    # Search vulnerability with custom query & projection
+    def search_vulnerabilities_id_with_query(self, query, proj, collection_name=None):
         result = list()
         if not collection_name:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                exploits = self.search_exploits_id_with_query(
+                vulnerabilities = self.search_vulnerabilities_id_with_query(
                     query, proj,
                     collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
+                if len(vulnerabilities) != 0:
+                    result.append((vulnerabilities, collection_name))
         else:
             collection = self.get_collection(collection_name)
-            exploits = collection.find(query, proj)
-            for exploit in exploits:
-                result.append(exploit)
+            vulnerabilities = collection.find(query, proj)
+            for vulnerability in vulnerabilities:
+                result.append(vulnerability)
         return result
 
-    # Can return a list of exploits ID or a tuple of list of exploits ID
+    # Can return a list of vulnerabilities ID or a tuple of list of vulnerabilities ID
     # and source name
-    def search_text_in_exploits(self, searched_text, collection_name=None):
-        exploits_id = list()
-        # If the source is precised we append all the exploits ID
+    def search_text_in_vulnerabilities(self, searched_text, collection_name=None):
+        vulnerabilities_id = list()
+        # If the source is precised we append all the vulnerabilities ID
         # That corresponds to our
         if collection_name:
             collection = self.get_collection(collection_name)
             # Get all data to find into the text
-            text_exploits = collection.find()
+            text_vulnerabilities = collection.find()
             # Collection name doesn't exist?
-            if not text_exploits:
+            if not text_vulnerabilities:
                 return
             # Load json text
-            exploits = json.loads(text_exploits)
-            # For each exploit find the text
-            for exploit in exploits:
+            vulnerabilities = json.loads(text_vulnerabilities)
+            # For each vulnerability find the text
+            for vulnerability in vulnerabilities:
                 # Convert to string
-                text_exploit = str(exploit)
-                # We found in the exploit the text
-                if searched_text in text_exploit:
-                    exploits_id.append(exploit["_id"])
+                text_vulnerability = str(vulnerability)
+                # We found in the vulnerability the text
+                if searched_text in text_vulnerability:
+                    vulnerabilities_id.append(vulnerability["_id"])
         else:
-            # Otherwhise recursively search text in exploits in every
+            # Otherwhise recursively search text in vulnerabilities in every
             # sources
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                searched_exploits = self.search_text_in_exploits(
+                searched_vulnerabilities = self.search_text_in_vulnerabilities(
                     searched_text,
                     collection_name)
                 # Do not append if it didn't find anything
-                if len(searched_exploits) != 0:
-                    exploits_id.append((searched_exploits, collection_name))
+                if len(searched_vulnerabilities) != 0:
+                    vulnerabilities_id.append(
+                        (searched_vulnerabilities, collection_name))
 
-        return exploits_id
+        return vulnerabilities_id
 
-    # Can return a list of exploits ID or a tuple of list of exploits ID
-    # and source name
-    def search_exploits_id_by_software(
-            self, software_name=None, version=None, operator=None,
-            collection_name=None):
+    def search_vulnerabilities_id(self, collection_name=None,
+                                  vulnerability_id=None,
+                                  min_published_date=None,
+                                  max_published_date=None,
+                                  min_modified_date=None,
+                                  max_modified_date=None,
+                                  min_score=None,
+                                  max_score=None,
+                                  min_lastseen_date=None,
+                                  max_lastseen_date=None,
+                                  software_name=None,
+                                  version=None,
+                                  operator=None,
+                                  cpe=None,
+                                  cpe23=None):
+        result = list()
+        find_query = dict()
+        temp_dict = dict()
 
-        exploits_id = list()
-        # If collection name exists
+        if version:
+            find_query["_source.affectedSoftware.version"] = {
+                "$regex": version}
+        if operator:
+            find_query["_source.affectedSoftware.operator"] = {
+                "$regex": operator}
+        if software_name:
+            find_query["_source.affectedSoftware.name"] = {
+                "$regex": software_name}
+
+        if min_published_date or max_published_date:
+            if min_published_date:
+                temp_dict["$gte"] = min_published_date
+            if max_published_date:
+                temp_dict["$lt"] = max_published_date
+            find_query["_source.published"] = temp_dict
+
+        if min_modified_date and max_modified_date:
+            if min_modified_date:
+                temp_dict["$gte"] = min_modified_date
+            if max_modified_date:
+                temp_dict["$lt"] = max_modified_date
+            find_query["_source.modified"] = temp_dict
+
+        if min_lastseen_date and max_lastseen_date:
+            if min_lastseen_date:
+                temp_dict["$gte"] = min_lastseen_date
+            if max_lastseen_date:
+                temp_dict["$lt"] = max_lastseen_date
+            find_query["_source.lastseen"] = temp_dict
+
+        if min_score and max_score:
+            if min_score:
+                temp_dict["$gte"] = min_score
+            if max_score:
+                temp_dict["$lt"] = max_score
+            find_query["_source.enchantments.score.value"] = temp_dict
+
+        if cpe:
+            find_query["_source.cpe"] = {"$regex": cpe}
+
+        if cpe23:
+            find_query["_source.cpe23"] = {"$regex": cpe23}
+
+        if vulnerability_id:
+            find_query["_id"] = {"$regex": vulnerability_id}
+
         if collection_name:
             collection = self.get_collection(collection_name)
-            find_query = dict()
-            # Append different search if precised
-            if version:
-                find_query["_source.affectedSoftware.version"] = {
-                    "$regex": version}
-            if operator:
-                find_query["_source.affectedSoftware.operator"] = {
-                    "$regex": operator}
-            if software_name:
-                find_query["_source.affectedSoftware.name"] = {
-                    "$regex": software_name}
-            # Search wasn't precised
-            if not find_query.keys():
-                raise Exception("search_exploit_software: not enough arguments")
-            found_exploits = collection.find(find_query, {"_id": 1})
-            for found_exploit in found_exploits:
-                exploits_id.append(found_exploit["_id"])
+            vulnerabilities_id = collection.find(find_query, {"_id": 1})
+            for vulnerability_id in vulnerabilities_id:
+                result.append(vulnerability_id["_id"])
         else:
-            # Otherwhise recursively search software in every sources
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                softwares_affected = self.search_exploits_id_by_software(
-                    software_name,
-                    version,
-                    operator,
+                vulnerabilities = self.search_vulnerabilities_id(collection_name,
+                                                                 min_published_date,
+                                                                 max_published_date,
+                                                                 software_name, version,
+                                                                 operator, min_modified_date,
+                                                                 max_modified_date, min_score,
+                                                                 max_score, min_lastseen_date,
+                                                                 max_lastseen_date, cpe)
+                if len(vulnerabilities) != 0:
+                    result.append((vulnerabilities, collection_name))
+
+        return result
+
+    # Search vulnerability by id,
+    # return list of vulnerabilities or tuple of vulnerabilities and source
+    def get_vulnerability_info(self, unique_id, collection_name=None):
+        result = list()
+        # If no collection name was precised we append
+        # For each sources the vulnerability found
+        if not collection_name:
+            collections_name = self.get_sources_collections_name()
+            for collection_name in collections_name:
+                vulnerabilities = self.get_vulnerability_info(
+                    unique_id,
                     collection_name)
-                # Do not append if we have 0 softwares affected
-                if len(softwares_affected) != 0:
-                    exploits_id.append((softwares_affected, collection_name))
-
-        return exploits_id
-
-    # Date format: year-month-dayThour-minute-second
-    # Example: 2016-09-26T17:22:32
-    # Returns a tuple of exploits ID and sourcename or list of exploits ID
-    def search_exploits_id_by_published_date(self, min_date=None, max_date=None, collection_name=None):
-        result = list()
-        if not min_date and not max_date:
-            raise Exception("min_date and max_date were not set!")
-
-        find_query = dict()
-        find_query_date = dict()
-
-        if min_date:
-            find_query_date["$gte"] = min_date
-
-        if max_date:
-            find_query_date["$lt"] = max_date
-
-        # Insert query between dates
-        find_query["_source.published"] = find_query_date
-
-        if collection_name:
-            collection = self.get_collection(collection_name)
-            exploits_id = collection.find(find_query, {"_id": 1})
-            for exploit_id in exploits_id:
-                result.append(exploit_id["_id"])
+                if len(vulnerabilities) != 0:
+                    result.append((vulnerabilities, collection_name))
         else:
-            collections_name = self.get_sources_collections_name()
-            for collection_name in collections_name:
-                exploits = self.search_exploits_id_by_published_date(
-                    min_date, max_date, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
-
+            # Otherwhise we just find the vulnerability in the source
+            collection = self.get_collection(collection_name)
+            vulnerabilities = collection.find({"_id": unique_id})
+            for vulnerability in vulnerabilities:
+                result.append(vulnerability)
         return result
 
-    # Date format: year-month-dayThour-minute-second
-    # Example: 2016-09-26T17:22:32
-    # Returns a tuple of exploits ID and sourcename or list of exploits ID
-    def search_exploits_id_by_modified_date(self, min_date=None, max_date=None, collection_name=None):
-        result = list()
-        if not min_date and not max_date:
-            raise Exception("min_date and max_date were not set!")
-
-        find_query = dict()
-        find_query_date = dict()
-
-        if min_date:
-            find_query_date["$gte"] = min_date
-
-        if max_date:
-            find_query_date["$lt"] = max_date
-
-        # Insert query between dates
-        find_query["_source.modified"] = find_query_date
-
-        if collection_name:
-            collection = self.get_collection(collection_name)
-            exploits_id = collection.find(find_query, {"_id": 1})
-            for exploit_id in exploits_id:
-                result.append(exploit_id["_id"])
-        else:
-            collections_name = self.get_sources_collections_name()
-            for collection_name in collections_name:
-                exploits = self.search_exploits_id_by_modified_date(
-                    min_date, max_date, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
-
-        return result
-
-    # Search exploits ID by score between 0 & 10
-    def search_exploits_id_by_score(self, min_score=None, max_score=None, collection_name=None):
-        result = list()
-        if not min_score and not max_score:
-            raise Exception("min_score and max_score were not set!")
-
-        find_query = dict()
-        find_query_score = dict()
-
-        if min_score:
-            find_query_score["$gte"] = min_score
-
-        if max_score:
-            find_query_score["$lt"] = max_score
-
-        # Insert query between dates
-        find_query["_source.enchantments.score.value"] = find_query_score
-
-        if collection_name:
-            collection = self.get_collection(collection_name)
-            exploits_id = collection.find(find_query, {"_id": 1})
-            for exploit_id in exploits_id:
-                result.append(exploit_id["_id"])
-        else:
-            collections_name = self.get_sources_collections_name()
-            for collection_name in collections_name:
-                exploits = self.search_exploits_id_by_score(
-                    min_score, max_score, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
-
-        return result
-
-    def search_exploits_id_by_lastseen_date(self, min_date=None, max_date=None, collection_name=None):
-        result = list()
-        if not min_date and not max_date:
-            raise Exception("min_date and max_date were not set!")
-
-        find_query = dict()
-        find_query_date = dict()
-
-        if min_date:
-            find_query_date["$gte"] = min_date
-
-        if max_date:
-            find_query_date["$lt"] = max_date
-
-        # Insert query between dates
-        find_query["_source.lastseen"] = find_query_date
-
-        if collection_name:
-            collection = self.get_collection(collection_name)
-            exploits_id = collection.find(find_query, {"_id": 1})
-            for exploit_id in exploits_id:
-                result.append(exploit_id["_id"])
-        else:
-            collections_name = self.get_sources_collections_name()
-            for collection_name in collections_name:
-                exploits = self.search_exploits_id_by_lastseen_date(
-                    min_date, max_date, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
-
-        return result
-
-    # Returns a tuple of exploits id and source name
-    # cpe:/ <part>:<vendor>:<product>:<version>:<update>:<edition>:<language>
-    #     "cpe": [
-    #     "cpe:/a:microsoft:windows_server_2012:r2",
-    #     "cpe:/a:microsoft:windows_10:1607",
-    #     "cpe:/o:microsoft:windows_server_2012:r2",
-    #     "cpe:/a:microsoft:windows_10:1511",
-    #     "cpe:/a:microsoft:edge:*",
-    #     "cpe:/a:microsoft:windows_10:-",
-    #     "cpe:/o:microsoft:windows_10:-",
-    #     "cpe:/o:microsoft:windows_server_2012:-",
-    #     "cpe:/o:microsoft:windows_10:1607",
-    #     "cpe:/o:microsoft:windows_10:1511",
-    #     "cpe:/a:microsoft:windows_server_2012:-",
-    #     "cpe:/o:microsoft:windows_8.1:*",
-    #     "cpe:/a:microsoft:windows_8.1:*"
-    # ],
-    # "cpe23": [
-    #     "cpe:2.3:o:microsoft:windows_10:1511:*:*:*:*:*:*:*",
-    #     "cpe:2.3:o:microsoft:windows_server_2012:-:*:*:*:*:*:*:*",
-    #     "cpe:2.3:o:microsoft:windows_server_2012:r2:*:*:*:*:*:*:*",
-    #     "cpe:2.3:a:microsoft:edge:*:*:*:*:*:*:*:*",
-    #     "cpe:2.3:o:microsoft:windows_10:1607:*:*:*:*:*:*:*",
-    #     "cpe:2.3:o:microsoft:windows_8.1:*:*:*:*:*:*:*:*",
-    #     "cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*"
-    # ],
-    def search_exploits_id_by_cpe(self, cpe, collection_name=None):
-        result = list()
-        if collection_name:
-            collection = self.get_collection(collection_name)
-            query_dict = dict()
-            query_dict["_source.cpe"] = {"$regex": cpe}
-            exploits = collection.find(query_dict, {"_id": 1})
-            for exploit in exploits:
-                result.append(exploit["_id"])
-        else:
-            collections_name = self.get_sources_collections_name()
-            for collection_name in collections_name:
-                exploits = self.search_exploits_id_by_cpe(
-                    cpe, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
-        return result
-
-    def search_exploits_id_by_cpe23(self, cpe, collection_name=None):
-        result = list()
-        if collection_name:
-            collection = self.get_collection(collection_name)
-            query_dict = dict()
-            query_dict["_source.cpe23"] = {"$regex": cpe}
-            exploits = collection.find(query_dict, {"_id": 1})
-            for exploit in exploits:
-                result.append(exploit["_id"])
-        else:
-            collections_name = self.get_sources_collections_name()
-            for collection_name in collections_name:
-                exploits = self.search_exploits_id_by_cpe23(
-                    cpe, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
-        return result
-
-    # Returns list of exploits id or tuple of exploits id with source name
-    def get_cvelist_by_exploit_id(self, exploit_id, collection_name=None):
+    # Returns list of vulnerabilities id or tuple of vulnerabilities id with source name
+    def get_cvelist_by_vulnerability_id(self, vulnerability_id, collection_name=None):
         result = list()
         if collection_name:
             collection = self.get_collection(collection_name)
             # Maybe using find_one could be better if we're sure that the id exists only once
-            exploits = collection.find({"_id": exploit_id}, {
-                                       "_id": 0, "_source.cvelist": 1})
-            for exploit in exploits:
-                result.extend(exploit["_source"]["cvelist"])
+            vulnerabilities = collection.find({"_id": vulnerability_id}, {
+                "_id": 0, "_source.cvelist": 1})
+            for vulnerability in vulnerabilities:
+                result.extend(vulnerability["_source"]["cvelist"])
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                exploits = self.get_cvelist_by_exploit_id(
-                    exploit_id, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
+                vulnerabilities = self.get_cvelist_by_vulnerability_id(
+                    vulnerability_id, collection_name)
+                if len(vulnerabilities) != 0:
+                    result.append((vulnerabilities, collection_name))
         return result
 
-    def get_exploits_id_from_source(self, collection_name):
+    def get_vulnerabilities_id_from_source(self, collection_name):
         result = list()
         collection = self.get_collection(collection_name)
-        exploits = collection.find({}, {"_id": 1})
-        for exploit in exploits:
-            result.append(exploit["_id"])
+        vulnerabilities = collection.find({}, {"_id": 1})
+        for vulnerability in vulnerabilities:
+            result.append(vulnerability["_id"])
         return result
 
-    def get_description_from_exploit_id(self, exploit_id, collection_name=None):
+    def get_description_from_vulnerability_id(self, vulnerability_id, collection_name=None):
         result = list()
         if collection_name:
             collection = self.get_collection(collection_name)
-            exploits = collection.find({"_id": exploit_id},
-                                       {"_id": 0, "_source.description": 1})
-            for exploit in exploits:
-                result.append(exploit["_source"]["description"])
+            vulnerabilities = collection.find({"_id": vulnerability_id},
+                                              {"_id": 0, "_source.description": 1})
+            for vulnerability in vulnerabilities:
+                result.append(vulnerability["_source"]["description"])
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                exploits = self.get_description_from_exploit_id(
-                    exploit_id, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
+                vulnerabilities = self.get_description_from_vulnerability_id(
+                    vulnerability_id, collection_name)
+                if len(vulnerabilities) != 0:
+                    result.append((vulnerabilities, collection_name))
         return result
 
-    def get_references_links_from_exploit_id(self, exploit_id, collection_name=None):
+    def get_references_links_from_vulnerability_id(self, vulnerability_id, collection_name=None):
         result = list()
         if collection_name:
             collection = self.get_collection(collection_name)
-            exploits = collection.find({"_id": exploit_id}, {
-                                       "_id": 0, "_source.references": 1})
-            for exploit in exploits:
-                ref_links = exploit["_source"]["references"]
+            vulnerabilities = collection.find({"_id": vulnerability_id}, {
+                "_id": 0, "_source.references": 1})
+            for vulnerability in vulnerabilities:
+                ref_links = vulnerability["_source"]["references"]
                 # Sometimes it is a list of links
                 result.extend(ref_links)
         else:
             collections_name = self.get_sources_collections_name()
             for collection_name in collections_name:
-                exploits = self.get_references_links_from_exploit_id(
-                    exploit_id, collection_name)
-                if len(exploits) != 0:
-                    result.append((exploits, collection_name))
+                vulnerabilities = self.get_references_links_from_vulnerability_id(
+                    vulnerability_id, collection_name)
+                if len(vulnerabilities) != 0:
+                    result.append((vulnerabilities, collection_name))
         return result
 
-    # Get all references from an exploit ID
-    def get_references_id_from_exploit_id(self, exploit_id):
+    # Get all references from an vulnerability ID
+    def get_references_id_from_vulnerability_id(self, vulnerability_id):
         references = list()
         collections_name = self.get_sources_collections_name()
         for collection_name in collections_name:
             collection = self.get_collection(collection_name)
-            # For each collections find the exploit ID
-            exploits = collection.find({"_id": exploit_id}, {
-                                       "_id": 0, "_source.enchantments.dependencies.references.idList": 1})
+            # For each collections find the vulnerability ID
+            vulnerabilities = collection.find({"_id": vulnerability_id}, {
+                "_id": 0, "_source.enchantments.dependencies.references.idList": 1})
             # Append references
-            for exploit in exploits:
-                exploit_references = exploit["_source"]["enchantments"]["dependencies"]["references"]
-                for exploit_reference in exploit_references:
-                    exploits_refs_id = exploit_reference["idList"]
-                    references.extend(exploits_refs_id)
+            for vulnerability in vulnerabilities:
+                vulnerability_references = vulnerability["_source"]["enchantments"]["dependencies"]["references"]
+                for vulnerability_reference in vulnerability_references:
+                    vulnerabilities_refs_id = vulnerability_reference["idList"]
+                    references.extend(vulnerabilities_refs_id)
         return references
 
-    # Returns a tuple of exploits and source name
-    def get_references_from_exploit_id(self, exploit_id):
-        references_id = self.get_references_id_from_exploit_id(exploit_id)
+    # Returns for each vulnerabilities a tuple of vulnerabilities and sourcename
+    def get_references_id_from_vulnerabilities_id(self, vulnerabilities_id):
         result = list()
-        collections_name = self.get_sources_collections_name()
-        for reference_id in references_id:
-            for collection_name in collections_name:
-                result_references = self.search_exploit(
-                    reference_id, collection_name)
-                if len(result_references) != 0:
-                    result.append((result_references, collection_name))
+        for vulnerability_id in vulnerabilities_id:
+            result.append(
+                self.get_references_id_from_vulnerability_id(vulnerability_id))
         return result
 
-    # Returns for each exploits a tuple of exploits and sourcename
-    def get_references_from_exploits_id(self, exploits_id):
-        result = list()
-        for exploit_id in exploits_id:
-            result.append(self.get_references_from_exploit_id(exploit_id))
-        return result
-
-    def insert_exploit(self, exploit, collection_name):
+    def insert_vulnerability(self, vulnerability, collection_name):
         collection = self.get_collection(collection_name)
         # TODO: See what kind of fields have been updated
         try:
-            collection.insert_one(exploit)
+            collection.insert_one(vulnerability)
         except pymongo.errors.PyMongoError as e:
             colors.print_error(e)
         stats = self.find_local_stats(collection_name)
-        stats.exploit_inserts.append(exploit["_id"])
+        stats.vulnerability_inserts.append(vulnerability["_id"])
 
-    def update_exploit(self, exploit, collection_name):
+    def update_vulnerability(self, vulnerability, collection_name):
         collection = self.get_collection(collection_name)
         # Try to update first
         try:
             result = collection.update_one(
-                {"_id": exploit["_id"]},
-                {"$set": exploit})
+                {"_id": vulnerability["_id"]},
+                {"$set": vulnerability})
         except pymongo.errors.PyMongoError as e:
             colors.print_error(e)
 
         # If it doesn't exist, insert it
         if result.matched_count == 0:
-            self.insert_exploit(exploit, collection_name)
+            self.insert_vulnerability(vulnerability, collection_name)
         else:
             stats = self.find_local_stats(collection_name)
-            stats.exploit_updates.append(exploit["_id"])
+            stats.vulnerability_updates.append(vulnerability["_id"])
 
-    def insert_exploits(self, exploits, collection_name):
+    def insert_vulnerabilities(self, vulnerabilities, collection_name):
         collection = self.get_collection(collection_name)
         # TODO: See what kind of fields have been updated
         try:
-            collection.insert_many(exploits)
+            collection.insert_many(vulnerabilities)
         except pymongo.errors.PyMongoError as e:
             colors.print_error(e)
         stats = self.find_local_stats(collection_name)
-        for exploit in exploits:
-            stats.exploit_inserts.append(exploit["_id"])
+        for vulnerability in vulnerabilities:
+            stats.vulnerability_inserts.append(vulnerability["_id"])
 
-    # Update many exploits can't be really done because each exploits have very
+    # Update many vulnerabilities can't be really done because each vulnerabilities have very
     # Specific stuffs anyway
 
     # Signatures methods

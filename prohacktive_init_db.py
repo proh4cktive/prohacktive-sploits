@@ -37,12 +37,12 @@ def source_update(src_name):
     colors.print_info("[-] Inserting source %s" % src_name)
     src_data = json.loads(sourcehelper.read_source(src_name))
 
-    colors.print_info("[-] Erasing old exploits %s ..." % src_name)
+    colors.print_info("[-] Erasing old vulnerabilities %s ..." % src_name)
     phdb.collections.drop_collection(src_name)
 
-    colors.print_info("[-] Inserting exploits of %s ..." % src_name)
+    colors.print_info("[-] Inserting vulnerabilities of %s ..." % src_name)
 
-    phdb.insert_exploits(src_data, src_name)
+    phdb.insert_vulnerabilities(src_data, src_name)
 
     colors.print_success("[x] Updated %s" % src_name)
 

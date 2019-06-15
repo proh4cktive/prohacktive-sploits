@@ -62,18 +62,18 @@ def vulners_source_fetch(api_key, collection_name):
         source_data = sourcehelper.read_source(source_name).decode("utf8")
         source_data = json.loads(source_data)
 
-        # Find every exploits that needs update into the file and update it
-        for exploit_update in source_update:
+        # Find every vulnerabilities that needs update into the file and update it
+        for vulnerability_update in source_update:
             # By default it's not inserted
-            updated_exploit = False
+            updated_vulnerability = False
             # Check if it has been inserted already
-            for exploit_index in range(len(source_data)):
-                if source_data[exploit_index]["_id"] == exploit_update["_id"]:
-                    source_data[exploit_index] = exploit_update
-                    updated_exploit = True
-            # If the exploit isn't here, we append it into the file
-            if not updated_exploit:
-                source_data.append(exploit_update)
+            for vulnerability_index in range(len(source_data)):
+                if source_data[vulnerability_index]["_id"] == vulnerability_update["_id"]:
+                    source_data[vulnerability_index] = vulnerability_update
+                    updated_vulnerability = True
+            # If the vulnerability isn't here, we append it into the file
+            if not updated_vulnerability:
+                source_data.append(vulnerability_update)
 
         colors.print_info("[-] Saving file signature %s" %
                           (fetched_srcs + source_file_sig))

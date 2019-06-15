@@ -36,29 +36,29 @@ def source_update(src_name):
     # Read source data
     source_data = json.loads(sourcehelper.read_source(src_name).decode("utf8"))
 
-    exploits_to_update = list()
+    vulnerabilities_to_update = list()
 
-    for exploit in source_data:
-        exploit_lastseen_date = exploit["_source"]["lastseen"]
-        exploit_published_date = exploit["_source"]["published"]
-        exploit_modified_date = exploit["_source"]["modified"]
+    for vulnerability in source_data:
+        vulnerability_lastseen_date = vulnerability["_source"]["lastseen"]
+        vulnerability_published_date = vulnerability["_source"]["published"]
+        vulnerability_modified_date = vulnerability["_source"]["modified"]
         # Get the max date between all those dates
-        exploit_update_date = max(
-            exploit_lastseen_date, exploit_modified_date, exploit_published_date)
+        vulnerability_update_date = max(
+            vulnerability_lastseen_date, vulnerability_modified_date, vulnerability_published_date)
         # If the date is higher than the last source fetching date on remote,
-        # we append the exploits we need to update/insert
-        exploit_date_local = datetime.strptime(
-            exploit_update_date, "%Y-%m-%dT%H:%M:%S")
-        if exploit_date_local > update_date_remote:
-            exploits_to_update.append(exploit)
+        # we append the vulnerabilities we need to update/insert
+        vulnerability_date_local = datetime.strptime(
+            vulnerability_update_date, "%Y-%m-%dT%H:%M:%S")
+        if vulnerability_date_local > update_date_remote:
+            vulnerabilities_to_update.append(vulnerability)
 
-    if len(exploits_to_update) == 0:
+    if len(vulnerabilities_to_update) == 0:
         raise Exception(
-            "File signature has changed but no exploits to update found")
+            "File signature has changed but no vulnerabilities to update found")
 
-    # Update all exploits into the list
-    for exploit in exploits_to_update:
-        phdb.update_exploit(exploit, src_name)
+    # Update all vulnerabilities into the list
+    for vulnerability in vulnerabilities_to_update:
+        phdb.update_vulnerability(vulnerability, src_name)
 
     phdb.update_src_sig(src_name, source_local_sig)
     colors.print_success("[x] Updated %s" % src_name)
